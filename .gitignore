@@ -34,3 +34,12 @@ vignettes/*.pdf
 
 # Shiny token, see https://shiny.rstudio.com/articles/shinyapps.html
 rsconnect/
+*.Rproj
+/*_cache/
+/cache/
+# Temporary files created by R markdown
+.Rproj.user
+lectures.Rproj
+/*_files/
+*.Rproj
+.DS_Store
