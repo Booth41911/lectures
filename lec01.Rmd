@@ -3,10 +3,10 @@ title: "Lecture 1"
 author: "DJM"
 date: "25 September 2018"
 output:
-  pdf_document: default
   slidy_presentation:
     css: http://mypage.iu.edu/~dajmcdon/teaching/djmRslidy.css
     font_adjustment: 0
+  pdf_document: default
 ---
 
 # Syllabus
@@ -234,7 +234,10 @@ Fedora or RedHat Linux:
 sudo yum install git
 ```
 
-# Pause for actions
+## Pause for actions
+
+|[gfx/git-graph.png]
+
 
 ## Initial configuration
 
@@ -296,3 +299,382 @@ Now you don't need your passphrase (from this computer)
 * __Pull__
 * Fix issues.
 * Push
+
+
+
+
+# R/Rmarkdown
+
+## Mark Up, Markdown
+
+* You are probably used to word processing programs, like Microsoft Word, which
+employ the "what you see is what you get" (WYSIWYG) principle: 
+  - you want italics, click, and, lo, they're in italics 
+  - you want some to be in a bigger, different font and you just select
+the font, and so on.  
+
+* This works well enough for n00bs but is not a viable
+basis for a system of text formatting
+
+* because it depends on a particular
+program (a) knowing what you mean and (b) implementing it well.  
+
+* The essential idea in a __mark-up language__ is that it consists of ordinary text, _plus_ signs which indicate
+how to change the formatting or meaning of the text.  
+
+* Some mark-up languages,
+like HTML (Hyper-Text Markup Language) use very obtrusive markup; others,
+like the language called __Markdown__, are more subtle.  
+
+
+## Example 
+
+For instance, the
+last few sentences in Markdown look like this:
+
+```
+* The essential idea in a
+__mark-up language__ is that it consists of ordinary text, _plus_ signs which
+indicate how to change the formatting or meaning of the text.  
+
+* Some mark-up
+languages, like HTML (Hyper-Text Markup Language) use very obtrusive markup;
+others, like the language called __Markdown__, are more subtle.
+```
+
+
+## Rendering 
+
+* Every mark-up language needs to be __rendered__ somehow into a format which
+actually includes the fancy formatting, images, mathematics, computer code,
+etc., etc., specified by the mark-up.  
+
+* For HTML, the rendering program is
+called a "web browser".  
+
+* Most computers which know how to work with Markdown
+at all know how to render it as 
+    - HTML (which you can then view in a browser),
+    - PDF (uses LaTeX, which you can then view in Acrobat or the like), 
+    - Word (which you can
+then view in the abomination of Redmond).
+
+
+## Advantages
+
+* portability across machines
+* no proprietary software (I'm looking at you Bill)
+* stability 
+
+R Markdown is, in
+particular, both "free as in beer" (you will never pay a dollar for software to
+use it) and "free as in speech" (the specification is completely open to all to
+inspect).  
+
+Even if you are completely OK with making obeisance to the
+Abomination of Redmond every time you want to read your own words, the sheer
+stability of mark-up languages makes them superior for scientific documents.
+
+## Rendering and Editing
+
+To write R Markdown, you will need a text editor, a program which lets you read
+and write plain text files.  You will also need R, and the package `rmarkdown`
+(and all the packages it depends on).
+
+* Most computers come with a text editor (TextEdit on the Mac, Notepad on Windows machines, etc.).
+* There are also lots of higher-powered text editors; I use [Emacs](http://www.gnu.org/software/emacs/emacs.html), but I admit it has a harsh learning curve.
+* You _could_ use Word (or some other WYSIWYG word processor), taking care to always save your document in plain text format.  I do not recommend this.
+* [R Studio](http://www.rstudio.com) comes with a built-in text editor, which knows about, and has lots of tools for, working with R Markdown documents.
+
+If this is your first time using a text editor for something serious, I recommend using R Studio. (That's what I'm using to write this.)
+
+## Rendering in R Studio
+
+Assuming you have the document you're working on open in the text editor,
+click the button that says "knit".
+
+
+## Basic Formatting in R Markdown
+
+For the most part, text is just text.  One advantage of R Markdown is that the
+vast majority of your document will be stuff you just type as you ordinarily
+would.
+
+__Rmarkdown = Vanilla Markdown + R code.__
+
+# Selected tips
+
+## Title, Author, Date, Output Format
+
+You can specify things like title, author and date in the **header** of your
+R Markdown file.  This goes at the very beginning of the file, preceded
+and followed by lines containing three dashes.  Thus the beginning of
+this file looks like so:
+```
+---
+title: Using R Markdown for Class Reports
+author: DJM
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+---
+```
+
+You can also use the header to tell R Markdown whether you want it to render to
+HTML (the default), PDF, or something else.  To have this turned into PDF,
+for instance, I'd write
+```
+---
+title: Using R Markdown for Class Reports
+author: DJM
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: pdf_document
+---
+```
+
+* This header information is called `YAML` if you need the [Google](http://www.google.com).
+
+
+
+## Including Code
+
+### Code Chunks and Their Results
+
+A code **chunk** is simply an off-set piece of code by itself.  It is preceded
+by ` ```{r} ` on a line by itself, and ended by a line which just says ` ``` `.
+The code itself goes in between.  Here, for instance, is some code which
+loads a data set from a library, and makes a scatter plot.
+
+```{r}
+library(MASS)
+data(cats)
+plot(Hwt ~ Bwt, data=cats, xlab="Body weight (kg)", ylab="Heart weight (g)")
+```
+
+### Inline Code
+
+* This is code not set off on a line by itself, but beginning with
+` `r ` and ending with ` ` `.  Using inline code is how this document
+knows that the `cats` data set contains `r nrow(cats)` rows, and that the
+median weight of the female cats' hearts was `r median(cats$Hwt[cats$Sex=="F"])`
+grams.
+
+* Notice that inline code does _not_ display the commands run, just their output.
+
+## Seen But Not Heard
+
+* Code chunks (but not inline code) can take a lot of __options__ which modify
+how they are run, and how they appear in the document.  
+
+* These options go after
+the initial `r` and before the closing `}` that announces the start of a code
+chunk.  One of the most common options turns off printing out the code,
+but leaves the results alone:
+ ` ```{r, echo=FALSE} `
+
+* Another runs the code, but includes neither the text of the code nor its output.
+ ` ```{r, include=FALSE} `
+
+* This might seem pointless, but it can be useful for code chunks which do set-up
+like loading data files, or initial model estimates, etc.
+
+* Another option prints the code in the document, but does not run it:
+ ` ```{r, eval=FALSE} `
+This is useful if you want to talk about the (nicely formatted) code.
+
+* You can give chunks names immediately after their opening, like
+` ```{r clevername} `.  This name is then used for the images (or other files)
+that are generated when the document is rendered.
+
+
+## Tables
+
+The default print-out of matrices, tables, etc. from R Markdown is frankly
+ugly.  The `knitr` package contains a very basic command, `kable`, which will
+format an array or data frame more nicely for display.
+
+Compare:
+
+```{r}
+coefficients(summary(lm(Hwt ~ Bwt, data=cats)))
+```
+
+with
+
+```{r}
+library(knitr) # Only need this the first time!
+kable(coefficients(summary(lm(Hwt ~ Bwt, data=cats))))
+```
+
+--- Of course, R's defaults print out a crazy number of decimal places. So use
+
+```{r}
+kable(coefficients(summary(lm(Hwt ~ Bwt, data=cats))),digits=3)
+```
+
+## "Caching" Code Chunks (Re-Running Only When Changed)
+
+* By default, R Markdown will re-run all of your code every time you render your
+document.  
+
+* If some of your code is slow, this can add up to a lot of time.  You
+can, however, ask R Markdown to keep track of whether a chunk of code has
+changed, and only re-run it if it has.  
+
+* This is called __caching__ the chunk.
+
+
+```{r, cache=FALSE}
+lm(Hwt ~ Bwt, data=cats)
+```
+
+
+## Setting Defaults for All Chunks
+
+You can tell R to set some defaults to apply to all chunks where you don't
+specifically over-ride them.  Here are the ones I generally use:
+
+```{r setup, eval=FALSE}
+# Need the knitr package to set chunk options
+library(knitr)
+
+# Set knitr options for knitting code into the report:
+# - Don't print out code (echo)
+# - Save results so that code blocks aren't re-run unless code changes (cache),
+# _or_ a relevant earlier code block changed (autodep), but don't re-run if the
+# only thing that changed was the comments (cache.comments)
+# - Don't clutter R output with messages or warnings (message, warning)
+  # This _will_ leave error messages showing up in the knitted report
+opts_chunk$set(echo=FALSE, fig.align='center',
+               cache=TRUE, autodep=TRUE, cache.comments=FALSE,
+               message=FALSE, warning=FALSE)
+```
+
+
+* This sets some additional options beyond the ones I've discussed,
+like not re-running a chunk if only the comments have changed
+(`cache.comments = FALSE`), and leaving out messages and warnings.
+
+* You can over-ride these defaults by setting options for individual chunks.
+
+
+## Math in R Markdown
+
+This is a bit complicated because the behavior (unfortunately) depends on the output type.
+
+Render pdf, just use LaTeX as usual (but no `$$` use `\[, \]`).
+
+Rendering HTML, essentially LaTeX, but some idiosyncrasies.
+
+Rendering Word, $\ldots$.
+
+__Point out the Cheat sheet.__
+
+## More details
+
+Lots of details in the __rmarkdownDetails__ file in the lectures repo.
+
+# My workflow
+
+## The basics
+
+1. I do all class documents in Rmarkdown. Notes, slides, etc.
+2. When working out new code for a project, I use a combination of R package (as I get close to completion) and Rmarkdown.
+    - Many stat journals require reproducible, documented code. An R package is great for this.
+    - Rmarkdown alone lets me document as I go.
+3. My students are required to give me reports in Rmarkdown.
+
+
+## For professional presentations
+
+I use Rmarkdown + Beamer:
+
+```
+---
+title: "Statistical implications of (some) computational approximations"
+author: |
+  | Daniel J. McDonald
+  | Indiana University, Bloomington
+  | \alo{\footnotesize \url{mypage.iu.edu/~dajmcdon}}
+date: |
+  | 24 January 2018
+output: 
+  beamer_presentation:
+    keep_tex: yes
+    fig_caption: no
+    includes:
+      in_header: ApproxStatMacros.tex
+classoption: "aspectratio=43"
+---
+```
+
+The `includes` statement loads all the LaTeX macros I need, specifies Beamer choices.
+
+## The old presentation
+
+1. Write lots of LaTeX
+2. Need a figure. Run R code, get figure, save as pdf.
+3. Recompile LaTeX. Axes are unreadable. Back to R, rerun R code,...
+4. Recompile LaTeX. Can't distinguish lines. Back to R, rerun R code,...
+5. Etc, etc.
+
+Now:  
+Code and LaTeX live in one file. I just recompile.
+
+## The old manuscript
+
+Similar to the old presentation.
+
+Now:  
+1. R package with documented code, available on Github.
+2. One script to run the analysis, one to gather the results.
+3. One Rmd file to take in the results, do preprocessing, generate all figures.
+4. LaTeX file on Journal style.
+
+## The optimal
+
+Same as above but with a Makefile to automatically run 1-4.
+
+# Rmarkdown practice
+
+
+## Recall Logistic regression
+
+Suppose $Y=1$ with probability $p(x)$ and $Y=0$ with probability $1-p(x)$. 
+
+I want to model $P(Y=1| X=x)$. 
+
+I'll assume that $p(x)/(1-p(x)) = ax$ for some scalar $a$. 
+
+We're going to estimate $a$ given data.
+
+## Recall gradient descent
+
+Want to solve
+\[
+\min_y f(y).
+\]
+
+You can calculate $f'(y)$.
+
+Procedure:  
+1. Input a guess $y_0$, a parameter $\gamma$.  
+2. Until I say stop: $y_{t} \leftarrow y_{t-1} - \gamma f'(y_{t-1});\ \ t++$.  
+3. Stop.
+
+## Exercise
+
+1. Rstudio > New Project...
+2. Clone Github repo "week1"
+3. Rename "[week1.Rmd]" to "[favorite_new_name.Rmd]"
+3. Use the .Rmd document to implement GD for 1-parameter logistic regression.
+5. Push your results back to the repo
+
+Notes:
+\[
+\begin{aligned}
+p(z) &= \frac{1}{1 + \exp(-z)}\\
+f(a,y,x) &= \sum_i y_i \log(p(ax_i)) + (1-y_i) \log(1-p(ax_i))\\
+f'(a,y,x) &= \sum_i (y_i-p(ax_i))x_i
+\end{aligned}
+\]
+
+
