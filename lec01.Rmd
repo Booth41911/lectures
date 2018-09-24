@@ -19,12 +19,12 @@ Website: http://mypage.iu.edu/~dajmcdon
 Email: daniel.mcdonald@chicagobooth.edu
 
 __Office hours__:  
-Me: TBA
+Me: Tuesday 11-12:30, by appointment
 
 __Course webpage__:    
 WWW: https://booth41911.github.io/  
 Github: https://github.com/booth41911  
-Piazza: https://piazza.com/chicagobooth/fall2018/bus41911/home
+Piazza: https://piazza.com/chicagobooth/fall2018/bus41911/home  
 Piazza sign-up: https://piazza.com/chicagobooth/fall2018/bus41911
 
 __Lectures__:  
@@ -39,10 +39,10 @@ Ph.D.-level course(s) in mathematical statistics and econometrics at the level o
 ## Course objectives
 
 Topics: 
-1. Data analysis workflow; 
-2. Supervised learning; 
-3. Model selection; 
-4. Dimension reduction;
+1. Data analysis workflow;  
+2. Supervised learning;   
+3. Model selection;   
+4. Dimension reduction;  
 5. Graphical Models/Time series/Causal inference if time allows.  
 
 Applications from finanace/macro/marketing as best I can.
@@ -236,8 +236,9 @@ sudo yum install git
 
 ## Pause for actions
 
-|[gfx/git-graph.png]
-
+<p align=center>
+![graph](gfx/git-graph.png)
+</p>
 
 ## Initial configuration
 
@@ -271,7 +272,7 @@ git to use nano. If for some reason git asks you questions about doing things, j
 ## When you want to work on a file
 
 * You __pull__ the repo onto your local machine
-* Make all your changes, saveing as many times as you like.
+* Make all your changes, saving as many times as you like.
 * You __commit__ your changes with a message, e.g.: "I fixed the horrible bug"
 * You __push__ your changes back to the repo
 
@@ -610,7 +611,7 @@ The `includes` statement loads all the LaTeX macros I need, specifies Beamer cho
 
 ## The old presentation
 
-1. Write lots of LaTeX
+1. Write lots of LaTeX, R code in separate files
 2. Need a figure. Run R code, get figure, save as pdf.
 3. Recompile LaTeX. Axes are unreadable. Back to R, rerun R code,...
 4. Recompile LaTeX. Can't distinguish lines. Back to R, rerun R code,...
@@ -624,9 +625,9 @@ Code and LaTeX live in one file. I just recompile.
 Similar to the old presentation.
 
 Now:  
-1. R package with documented code, available on Github.
-2. One script to run the analysis, one to gather the results.
-3. One Rmd file to take in the results, do preprocessing, generate all figures.
+1. R package with documented code, available on Github.  
+2. One script to run the analysis, one to gather the results.  
+3. One Rmd file to take in the results, do preprocessing, generate all figures.  
 4. LaTeX file on Journal style.
 
 ## The optimal
@@ -656,8 +657,8 @@ Want to solve
 You can calculate $f'(y)$.
 
 Procedure:  
-1. Input a guess $y_0$, a parameter $\gamma$.  
-2. Until I say stop: $y_{t} \leftarrow y_{t-1} - \gamma f'(y_{t-1});\ \ t++$.  
+1. Input a guess `y(0)`, a parameter `gam`.  
+2. Until I say stop: `y(t) <-- y(t-1) - gam * f'(y(t-1));  t++`.  
 3. Stop.
 
 ## Exercise
