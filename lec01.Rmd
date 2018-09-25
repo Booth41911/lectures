@@ -3,10 +3,10 @@ title: "Lecture 1"
 author: "DJM"
 date: "25 September 2018"
 output:
+  pdf_document: default
   slidy_presentation:
     css: http://mypage.iu.edu/~dajmcdon/teaching/djmRslidy.css
     font_adjustment: 0
-  pdf_document: default
 ---
 
 # Syllabus
@@ -14,7 +14,7 @@ output:
 ## Course info
 __Instructor__:  
 Daniel McDonald  
-Office: Harper Center 359
+Office: Harper Center 359  
 Website: http://mypage.iu.edu/~dajmcdon  
 Email: daniel.mcdonald@chicagobooth.edu
 
@@ -38,7 +38,7 @@ Ph.D.-level course(s) in mathematical statistics and econometrics at the level o
 
 ## Course objectives
 
-Topics: 
+Topics:   
 1. Data analysis workflow;  
 2. Supervised learning;   
 3. Model selection;   
@@ -52,8 +52,14 @@ Emphasis on developing a workflow to avoid mistakes.
 ## Lectures
 
 Class time will consist of a
-combination of lecture, discussion, questions and answers, and problem
-solving, with a focus on problem solving. You are strongly encouraged
+combination of lecture, discussion, questions and answers, 
+
+and problem
+solving, 
+
+with a focus on problem solving. 
+
+You are strongly encouraged
 to bring a laptop to class.
 
 ## Textbook
@@ -138,7 +144,7 @@ only considered cheating
 
 > If I suspect cheating, your case will be forwarded to the Dean's office. No questions asked.
 
-# Github
+# Git + Github
 
 ## Acknowledgements
 
@@ -310,8 +316,8 @@ Now you don't need your passphrase (from this computer)
 
 * You are probably used to word processing programs, like Microsoft Word, which
 employ the "what you see is what you get" (WYSIWYG) principle: 
-  - you want italics, click, and, lo, they're in italics 
-  - you want some to be in a bigger, different font and you just select
+    - you want italics, click, and, lo, they're in italics 
+    - you want some to be in a bigger, different font and you just select
 the font, and so on.  
 
 * This works well enough for n00bs but is not a viable
