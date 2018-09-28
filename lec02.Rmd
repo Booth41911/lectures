@@ -1,0 +1,557 @@
+---
+title: "Lecture 2"
+author: "DJM"
+date: "2 October 2018"
+output:
+  slidy_presentation:
+    css: http://mypage.iu.edu/~dajmcdon/teaching/djmRslidy.css
+    font_adjustment: 0
+  pdf_document: default
+bibliography: booth-refs.bib
+---
+
+\newcommand{\cdist}{\rightsquigarrow}
+\newcommand{\cprob}{\xrightarrow{P}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Expect}[1]{\mathbb{E}\left[ #1 \right]}
+\newcommand{\Var}[1]{\mathbb{V}\left[ #1 \right]}
+\newcommand{\Cov}[2]{\mathrm{Cov}\left[#1,\ #2\right]}
+\newcommand{\given}{\ \vert\ }
+\renewcommand{\P}{\mathbb{P}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\argmin}[1]{\underset{#1}{\textrm{argmin}}}
+\newcommand{\F}{\mathcal{F}}
+\newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
+\newcommand{\indicator}{\mathbbm{1}}
+\renewcommand{\bar}{\overline}
+\renewcommand{\hat}{\widehat}
+
+
+## Statistics vs. ML
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(cache=TRUE, autodep=TRUE, message=FALSE, fig.align='center')
+library(tidyverse)
+theme_set(theme_minimal(base_family="Times"))
+green = '#00AF64'
+blue = '#0B61A4'
+red = '#FF4900'
+orange = '#FF9200'
+colvec = c(green,blue,red,orange)
+```
+
+
+* Lots of overlap, both try to "extract information from data"
+
+Venn diagram
+
+
+## Probability
+
+1. $X_n$ converges _in probability_ to $X$, $X_n\cprob X$, if for every $\epsilon>0$,
+   $\P\left(|X_n-X| < \epsilon\right) \rightarrow 1$. 
+2. $X_n$ converges _in distribution_ to $X$, $X_n\cdist X$, if 
+   $F_n(t)\rightarrow F(t)$ at all continuity points $t$. 
+3. (Weak law) If $X_1, X_2,\ldots$ are iid random variables with common mean $m$,then
+  $\bar{X}_n \cprob  m$.
+4. (CLT) If $X_1, X_2,\ldots$ are iid random variables with common mean $m$ and variance $s^2<\infty$, then $\sqrt{n}(\bar{X}_n-m)/s \cdist \mbox{N}(0,1)$.
+
+
+## Big-Oh and Little-Oh
+
+Deterministic:
+
+1.  $a_n = o(1)$ means $a_n\rightarrow 0$ as $n\rightarrow\infty$
+2.  $a_n = o(b_n)$ means $\frac{a_n}{b_n} = o(1)$.  
+    Examples:  
+    -   If $a_n = \frac{1}{n}$, then $a_n = o(1)$
+    -   If $b_n = \frac{1}{\sqrt{n}}$, then $a_n = o(b_n)$  
+3.  $a_n = O(1)$ means $a_n$ is eventually bounded for all $n$ large
+    enough, $|a_n|<c$ for some $c>0$. Note that $a_n =o(1)$ implies $a_n = O(1)$
+4.  $a_n = O(b_n)$ means $\frac{a_n}{b_n} = O(1)$. Likewise,
+    $a_n = o(b_n)$ implies $a_n = O(b_n)$.
+    Examples:  
+    -   If $a_n = \frac{n}{2}$, then $a_n = O(n)$
+
+Stochastic analogues:
+
+1.  $Y_n = o_p(1)$ if for all $\epsilon > 0$, then
+    $P(|Y_n|>\epsilon)\rightarrow0$
+2.  We say $Y_n = o_p(a_n)$ if $\frac{Y_n}{a_n} = o_p(1)$
+3.  $Y_n = O_p(1)$ if for all $\epsilon > 0$, there exists a $c > 0$
+    such that $P(|Y_n|>c)<\epsilon$
+4.  We say $Y_n = O_p(a_n)$ if $\frac{Y_n}{a_n} = O_p(1)$  
+    Examples:  
+    -   $\overline{X}_n - \mu = o_p(1)$ and $S_n - \sigma^2 =
+            o_p(1)$. By the the Law of Large Numbers.  
+    -   $\sqrt{n}(\overline{X}_n-\mu) = O_p(1)$ and $\overline{X}_n-\mu =
+            O_p(\frac{1}{\sqrt{n}})$. By the Central Limit Theorem.
+            
+## Statistical models
+
+A statistical model $\mathcal{P}$ is a collection of probability
+distributions or densities. A parametric model has the form
+$$\mathcal{P}= \{p(x;\theta):\theta\in\Theta\}$$ where
+$\Theta\subset\mathbb{R}^d$ in the parametric case.
+
+Examples of nonparametric statistical models:
+
+-   $\mathcal{P}= \{$ all continuous CDF's $\}$
+
+-   $\mathcal{P}= \{f:\int(f''(x))^2dx<\infty\}$
+
+## Evaluating estimators
+
+An *estimator* is a function of data that
+does not depend on $\theta$.
+
+Suppose $X\sim N(\mu,1)$.  
+    -$\mu$ is not an estimator.  
+    -Things that are estimators: $X$, any functions of $X$, 3, $\sqrt{X}$, etc.
+
+1.  Bias and Variance
+2.  Mean Squared Error
+3.  Minimaxity and Decision Theory
+4.  Large Sample Evaluations
+
+## MSE
+
+Mean Squared Error (MSE). Suppose $\theta, \widehat\theta$, define
+$$\begin{aligned}
+\mathbb{E}\!\left[ \left(\theta - \widehat\theta \right)^2 \right] = \int \cdots \int \left[ \left( \widehat\theta(x_1, \ldots, x_n) - \theta\right) f(x_1;\theta)^2 \cdots f(x_n;\theta) \right] dx_1 \cdots dx_n.\end{aligned}$$
+
+Bias and Variance The bias is $$\begin{aligned}
+B = \mathbb{E}\!\left[\widehat\theta\right] - \theta,\end{aligned}$$ and
+variance is $$\begin{aligned}
+V = \Var{\widehat\theta}.\end{aligned}$$
+
+Bias-Variance Decomposition $$\begin{aligned}
+\mathit{MSE} = B^2 + V\end{aligned}$$
+
+$$\begin{aligned}
+\mathit{MSE} &= \mathbb{E}\!\left[ ( \widehat\theta - \theta )^2\right]\\
+&= \mathbb{E}\!\left[ \left(\widehat\theta - \mathbb{E}\!\left[\widehat\theta\right] +
+    \mathbb{E}\!\left[\widehat\theta\right] - \theta\right)^2 \right]\\ 
+&= \mathbb{E}\!\left[ \widehat\theta - \mathbb{E}\!\left[\widehat\theta\right] \right] + \left(
+  \mathbb{E}\!\left[\widehat\theta\right] - \theta \right)^2 +  
+\underbrace{2\mathbb{E}\!\left[ \widehat\theta - \mathbb{E}\!\left[\widehat\theta\right] \right]}_{=0}
+\left(\mathbb{E}\!\left[\widehat\theta\right] - \theta \right)\\ 
+&= V + B^2\end{aligned}$$
+
+An estimator is unbiased if $B=0$. Then $\mathit{MSE} = Variance$.
+
+Let $x_1, \ldots, x_n \overset{iid}\sim N(\mu,\sigma^2)$.
+
+$$\begin{aligned}
+ \mathbb{E}\!\left[\overline{x}\right] &= \mu, & \mathbb{E}\!\left[s^2\right] &= \sigma^2\\
+  \mathbb{E}\!\left[(\overline{x} - \mu)^2\right] &= \frac{\sigma^2}n
+  =O\left(\frac1n\right) &
+\mathbb{E}\!\left[(s^2 - \sigma^2)^2 \right] &= \frac{2\sigma^4}{n-1} =
+O\left(\frac1n\right).\end{aligned}$$
+
+## Minimaxity
+
+Let $\mathcal{P}$ be a set of distributions. Let $\theta$ be a parameter and let $L(\theta, \theta')$ be a loss function. 
+
+The __minimax risk__ is
+
+\[
+R_n(\mathcal{P}) = \inf_{\hat\theta} \sup_{P\in\mathcal{P}} \mathbb{E}_P[L(\theta,\hat\theta)]
+\]
+
+If $\sup_{P\in\mathcal{P}} \E_P [L(\theta, \hat\theta)] = R_n$ then $\hat\theta$ is a minimax estimator.
+
+* $X_1, X_2, \dots, X_n \overset{iid}{\sim} N(\theta, 1)$ Then $\bar X$
+  is minimax for many loss functions. It's risk is $R_n = \frac{1}{n}$
+  which is the ``Parametric Rate''.
+* $X_1, X_2,\dots, X_n \sim f$, where $f \in \F$ is some density. Let
+  $\F$ be the class of smooth densities:  $\F = \left\{ f ; \int (f'')^2 < c_0\right\}$
+  Then $R_n \leq C n^{-4/5}$ for 
+    $L(\hat{f}, f) = \int(f-\hat{f})^2 dx.$
+    
+
+# Linear model, introduction
+
+## The Setup
+
+Suppose we have data
+$$\mathcal{D}= \{ (X_1 , Y_1), (X_2 , Y_2), \ldots, (X_n , Y_n) \},$$
+where
+
+-   $X_i \in \mathbb{R}^p$ are the _features_
+
+    (or explanatory variables or
+    predictors or
+    covariates. NOT INDEPENDENT VARIABLES!)
+
+-   $Y_i \in \mathbb{R}$ are the response
+    variables.
+
+    (NOT DEPENDENT VARIABLE!)
+
+Our goal for this class is to find a way to explain (at least
+approximately) the relationship between $X$
+and $Y$.
+
+## Prediction risk for regression
+
+Given the _training data_ $\mathcal{D}$, we
+want to predict some independent _test data_
+$Z = (X,Y)$
+
+This means forming a $\hat f$, which is a function of both the range of
+$X$ and the training data $\mathcal{D}$, which provides predictions
+$\hat Y = \hat f(X)$.
+
+
+The quality of this prediction is measured via the prediction risk
+$$R(\hat{f}) = \Expect{(Y - \hat{f}(X))^2}.$$
+
+We know that the _regression function_,
+$f_*(X) = \mathbb{E}[Y | X]$, is the best possible predictor.
+
+
+Note that $f_*$ is *unknown*.
+
+
+## A linear model: Multiple regression
+
+
+If we assume:
+$f_*(X) = X^{\top}\beta =  \sum_{j=1}^p x_j \beta_j$
+$$\Rightarrow Y_i = X_i^{\top}\beta + \epsilon_i$$. 
+
+There's generally no reason to make this assumption.
+
+We'll examine a few cases:
+1. $f_*$ is linear, low dimensions.
+2. $f_*$ is ~~not~~ linear, but we use a linear model anyway
+3. $f_*$ is linear, high dimensions.
+4. $f_*$ isn't linear, high dimensions.
+
+Important:
+Calling $f_*$ "linear", means that $f_*(x) =  x'\beta$
+
+## Kernelization
+
+We'll come back to this more rigorously later in the course.
+
+Suppose $x\in[0,2\pi]$ and $f_*(x) = \sin(x)$.
+
+$f_*$ isn't linear in $x$. 
+
+But 
+\[
+\sin(x) = \beta_1 x + \beta_2 x^2 +\beta_3 x^3 + \cdots = \sum_{j=1}^\infty \beta_j x^j
+\]
+by Taylor's theorem (of course this works for any function).
+
+If I have some map $\Phi(x)\rightarrow [\phi_1(x), \ldots, \phi_K(x)]$, then I can estimate a linear model using the new features $\phi_1,\ldots,\phi_K$.
+
+I can even take $K=\infty$.
+
+This is still a "linear" model in the sense we're using today, though it isn't "linear" in the original $x$.
+
+## Low-dimension, high-assumptions
+
+Let $x_i \in \R^p$, $p<n$.
+
+If $f_*$ is linear, and $\epsilon_i \sim N(0,\sigma^2)$ (independent)
+
+Then all the good things happen:
+1. $R(\hat f) = \sigma^2\left[1 + \frac{p}{n}\right]$
+2. $\norm{\beta_*-\hat\beta}_2^2 = O_p(p/n)$
+3. Coefficient estimates are normally distributed.
+4. etc.
+
+## Low-dimension, low-assumptions
+
+Let $\beta_* = \argmin_\beta \Expect{(Y-X\beta)^2}$ be the best linear predictor for the feature $X$.
+
+Note that this is well defined: $\beta_* = \E[XX']^{-1}\E[XY] =: \Sigma_{XX}^{-1}\sigma_{XY}$.
+
+Call $R(\beta_*) = \Expect{(Y-X\beta_*)^2}$.
+
+We call $R(\beta)-R(\beta_*)$ the _excess risk_ of using $\beta$ relative to the best linear predictor $\beta_*$.
+
+Note that
+\[
+R(\beta)-R(\beta_*) = (\beta-\beta_*)'\Sigma (\beta-\beta_*).
+\]
+
+Then, (simplified result), See Theorem 11.3 of @GyorfiKohler,
+\[
+R(\beta) \leq C \left[R(\beta_*) + \frac{p \log n}{n}\right] 
+\]
+
+Note that if the model were linear, $R(\beta_*) = \sigma^2$
+
+We also have a CLT [see @BerkBrown2014]:
+\[
+\begin{aligned}
+\sqrt{n}(\hat\beta-\beta_*) & \cdist N(0,\Gamma)\\
+\Gamma &= \Sigma^{-1} \Expect{(Y-X\beta)^2 XX'} \Sigma^{-1}
+\end{aligned}
+\]
+
+
+
+
+
+
+# Bias and variance
+
+## Prediction risk for regression
+
+Note that $R(\hat{f})$ can be written as
+$$R(\hat{f}) = \int \textrm{bias}^2(x) d\mathbb{P}_X + \int \textrm{var}(x) d\mathbb{P}_X + \sigma^2$$
+where 
+$$\begin{aligned}
+\textrm{bias}(x) & = \Expect{\hat{f}(x)} - f_*(x)\\
+\textrm{var}(x) & = \Var{\hat{f}(x)} \\
+\sigma^2 & = \Expect{(Y - f_*(X))^2}
+\end{aligned}$$
+
+
+This decomposition applies to much more general loss functions [@James2003]
+
+
+
+```{r,fig.align='center',fig.height=6, fig.width=6, echo=FALSE, message=FALSE}
+cols = c(blue, red, green, orange)
+
+par(mfrow=c(2,2),bty='n',ann=FALSE,xaxt='n',yaxt='n',family='serif',mar=c(0,0,0,0),oma=c(0,2,2,0))
+require(mvtnorm)
+mv = matrix(c(0,0,0,0,-.5,-.5,-.5,-.5),4,byrow=T)
+va = matrix(c(.01,.01,.5,.5,.05,.05,.5,.5),4,byrow=T)
+
+for(i in 1:4){
+  plot(0,0,ylim=c(-2,2),xlim=c(-2,2),pch=19,cex=50,col=blue,ann=FALSE,pty='s')
+  points(0,0,pch=19,cex=30,col='white')
+  points(0,0,pch=19,cex=20,col=green)
+  points(0,0,pch=19,cex=10,col=orange)
+  points(rmvnorm(20,mean=mv[i,],sigma=diag(va[i,])), cex=1, pch=19)
+  switch(i, 
+         '1'= {
+           mtext('low variance',3,cex=2)
+           mtext('low bias',2,cex=2)
+         },
+         '2'= mtext('high variance',3,cex=2),
+         '3' = mtext('high bias',2,cex=2)
+  )
+}
+```
+
+
+
+
+## Bias-variance tradeoff
+
+This can be heuristically thought of as
+$$\textrm{Prediction risk} = \textrm{Bias}^2 + \textrm{Variance}.$$
+
+There is a natural conservation between these quantities
+
+
+Low bias $\rightarrow$ complex model $\rightarrow$ many parameters
+$\rightarrow$ high variance
+
+
+The opposite also holds
+
+(Think: $\hat f \equiv 0$.)
+
+
+We'd like to 'balance' these quantities to get the best possible
+predictions
+
+
+
+
+## Classical regime
+
+The Gauss-Markov theorem assures us that OLS is the best linear
+_unbiased_ estimator of $\beta$
+
+
+Also, it is the maximum likelihood estimator under a homoskedastic,
+independent Gaussian model, has the other nice properties listed above.
+
+Does that necessarily mean it is any good?
+
+
+Write $X= U D V'$ for the SVD of the design matrix $X$.
+
+Then
+$\Var{\hat\beta_{LS}}  \propto (X^{\top}X)^{-1}  
+= 
+VD^{-1}\underbrace{U^{\top}U}_{=I} D^{-1} V^{\top}
+=
+VD^{-2}  V^{\top}$
+
+
+Thus,
+$$\mathbb{E}|| \hat\beta_{LS} - \beta||_2^2  =  \textrm{trace}(\mathbb{V}\hat\beta) \propto \sum_{j=1}^p \frac{1}{d_j^2}$$
+
+_Important:_ Even in the
+classical regime, we can do arbitrarily badly if $d_p \approx 0$!
+
+## An example
+
+```{r, echo=FALSE}
+set.seed(20181002)
+n = 60
+x = runif(n)
+y = sin(2*pi*x) + rnorm(n)
+bigx = 1:100/100
+df = data.frame(x = bigx, y=sin(bigx),
+                p01 = predict(lm(y~x),newdata = data.frame(x=bigx)),
+                p03 = predict(lm(y~poly(x,3)),newdata = data.frame(x=bigx)),
+                p10 = predict(lm(y~poly(x,10)),newdata = data.frame(x=bigx)),
+                p19 = predict(lm(y~poly(x,19)),newdata = data.frame(x=bigx)))
+```
+
+```{r, echo=FALSE,fig.height=4,fig.width=6}
+gathered = df %>% gather(key='model',value='value',-x,-y)
+ggplot(data.frame(x,y), aes(x=x,y=y)) + geom_point() + coord_cartesian(ylim=c(-3,3)) +
+  geom_line(data=gathered, aes(x=x,y=value,color=model), linetype='dotted') +
+  scale_color_brewer(palette='Set1') + stat_function(fun=function(x) sin(2*pi*x))
+```
+
+Using a Taylor's series, for all $X$
+$$\sin(X) = \sum_{q = 0}^\infty \frac{(-1)^qX^{2q+1}}{(2q + 1)!}  = \Phi(X)^{\top}\beta$$
+Additional polynomial terms will __reduce__ the bias but the variance can get nasty.
+
+
+
+## Returning to polynomial example: Variance
+
+The least squares solution is given by solving
+$\min\norm{X\beta - Y}_2^2$
+
+$$X=
+\begin{bmatrix}
+1 & X_1 & \ldots & X_1^{p-1} \\
+   & \vdots && \\
+ 1 & X_n & \ldots & X_n^{p-1} \\
+\end{bmatrix},$$ 
+is the associated Vandermonde matrix.
+
+
+This matrix is well known for being numerically unstable
+
+
+\script{Letting $\X = UDV^{\top}$, this means that $d_1/d_p \rightarrow \infty$}
+
+Hence $$\norm{(\mathbb{X}^{\top}\mathbb{X})^{-1}}_2 = \frac{1}{d_p^2}$$
+grows larger, where here $\norm{\cdot}_2$ is the spectral (operator)
+norm.
+
+In the example, I used the _orthogonal_ polynomials, so $d_j=1$.
+
+So, $\Var{\hat\beta} = \sigma^2 p$.
+
+
+__Conclusion__:
+Fitting the full
+least squares model, even in low dimensions, can lead to poor
+prediction/estimation performance.
+
+<!--
+
+## Big data regime
+
+[Big data]{style="color: orangemain"}: The computational complexity
+scales extremely quickly. This means that procedures that are feasible
+classically are not for large data sets
+
+
+[[Example:]{style="color: greenmain"}]{.smallcaps} Fit $\hat\beta_{LS}$
+with $\mathbb{X}\in \mathbb{R}^{ n \times p}$. Next fit $\hat\beta_{LS}$
+with $\mathbb{X}\in \mathbb{R}^{ 3n \times 4p}$
+
+
+The second case will take $\approx$ $(3*4^2) = 48$ times longer to
+compute, as well as $\approx 12$ times as much memory!
+
+(Actually, for software such as [R]{style="color: brick"} it might take
+36 times as much memory, though there are data structures specifically
+engineered for this purpose that update objects 'in place')
+
+## Conclusion
+
+\leavevmode
+\small
+\color{brick}
+\verbatim
+p = 300; n = 10000 Y = rnorm(n); X = matrix(rnorm(n\*p),nrow=n,ncol=p)
+start = proc.time()\[3\] out = lm(Y .,data=data.frame(X)) end =
+proc.time()\[3\] smallTime = end - start
+
+n = nMultiple\*n; nMultiple = 3 p = pMultiple\*p; pMultiple = 4 Y =
+rnorm(n); X = matrix(rnorm(n\*p),nrow=n,ncol=p) start = proc.time()\[3\]
+out = lm(Y .,data=data.frame(X)) end = proc.time()\[3\] bigTime = end -
+start \> print(bigTime/smallTime) elapsed 38.61458 \>
+print(nMultiple\*pMultiple\*\*2) \[1\] 48
+
+## Example big data problem
+
+\centering
+![image](../figures/watsonEbayAuction){width="4.75in"}
+
+## Example big data problem
+
+Buyer:
+
+\centering
+![image](../figures/watsonEbayCommentBuyer){width="4.65in"}\
+
+
+Seller:
+
+\centering
+![image](../figures/watsonEbayCommentSeller){width="4.65in"}
+
+\vspace{.3in}
+The data ($\sim$750 Gb, millions of rows, thousands of columns):
+
+\tiny
+  ------------ ----- -------- ---------------------------------------------- ------ -------- -------------------- -- -- -- -- -- -- -- -- -- -- --
+  User         ID    Rating   Comment                                        Role   WinBid   SellerID                                           
+  dorkyporky   134   1        fast delivery\.....very good seller\...AAA++   B      15.51    princesskitten2001                                 
+  ------------ ----- -------- ---------------------------------------------- ------ -------- -------------------- -- -- -- -- -- -- -- -- -- -- --
+
+## High dimensional regime
+
+[High dimensional]{style="color: brick"}: These problems tend to have
+many of the computational problems as [Big
+data]{style="color: orangemain"}, as well as a [rank
+problem]{style="color: greenmain"}:
+
+
+Suppose $\mathbb{X}\in \mathbb{R}^{n \times p}$ and $p > n$
+
+
+Then $\textrm{rank}(\mathbb{X}) = n$ and the equation
+$\mathbb{X}\hat{\beta} = Y$:
+
+-   can be solved *exactly* (that is; the training error is 0)
+
+-   has an infinite number of solutions
+
+
+## High dimensional regime: Example
+
+
+[^1]: Note: sometimes we integrate with respect to $\mathcal{D}$ only,
+    $Z$ only, neither (loss), or both.
+
+[^2]: More on this later
+
+[^3]: This should be compared with the variance computation in equation
+    ([\[eq:var\]](#eq:var){reference-type="ref" reference="eq:var"})
+
+
+-->
+
+## References
