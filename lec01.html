@@ -379,13 +379,13 @@ others, like the language called __Markdown__, are more subtle.</code></pre>
 <pre><code>---
 title: Using R Markdown for Class Reports
 author: DJM
-date: &quot;25 September, 2018&quot;
+date: &quot;28 September, 2018&quot;
 ---</code></pre>
 <p>You can also use the header to tell R Markdown whether you want it to render to HTML (the default), PDF, or something else. To have this turned into PDF, for instance, I’d write</p>
 <pre><code>---
 title: Using R Markdown for Class Reports
 author: DJM
-date: &quot;25 September, 2018&quot;
+date: &quot;28 September, 2018&quot;
 output: pdf_document
 ---</code></pre>
 <ul>
@@ -610,7 +610,7 @@ Code and LaTeX live in one file. I just recompile.</p>
 \begin{aligned}
 p(z) &amp;= \frac{1}{1 + \exp(-z)}\\
 f(a,y,x) &amp;= \sum_i y_i \log(p(ax_i)) + (1-y_i) \log(1-p(ax_i))\\
-f'(a,y,x) &amp;= \sum_i (y_i-p(ax_i))x_i
+f'(a,y,x) &amp;= -\sum_i (y_i-p(ax_i))x_i
 \end{aligned}
 \]</span></p>
 </div>

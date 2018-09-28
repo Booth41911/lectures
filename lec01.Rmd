@@ -3,10 +3,10 @@ title: "Lecture 1"
 author: "DJM"
 date: "25 September 2018"
 output:
-  pdf_document: default
   slidy_presentation:
     css: http://mypage.iu.edu/~dajmcdon/teaching/djmRslidy.css
     font_adjustment: 0
+  pdf_document: default
 ---
 
 # Syllabus
@@ -680,7 +680,7 @@ Notes:
 \begin{aligned}
 p(z) &= \frac{1}{1 + \exp(-z)}\\
 f(a,y,x) &= \sum_i y_i \log(p(ax_i)) + (1-y_i) \log(1-p(ax_i))\\
-f'(a,y,x) &= \sum_i (y_i-p(ax_i))x_i
+f'(a,y,x) &= -\sum_i (y_i-p(ax_i))x_i
 \end{aligned}
 \]
 
