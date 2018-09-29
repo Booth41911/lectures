@@ -25,12 +25,20 @@ bibliography: booth-refs.bib
 \newcommand{\indicator}{\mathbbm{1}}
 \renewcommand{\bar}{\overline}
 \renewcommand{\hat}{\widehat}
+\newcommand{\tr}[1]{\mbox{tr}(#1)}
+\newcommand{\brt}{\widehat{\beta}_{r,t}}
+\newcommand{\brl}{\widehat{\beta}_{r,\lambda}}
+\newcommand{\bls}{\widehat{\beta}_{ls}}
+\newcommand{\blt}{\widehat{\beta}_{l,t}}
+\newcommand{\bll}{\widehat{\beta}_{l,\lambda}}
+\newcommand{\X}{\mathbb{X}}
 
 
 ## Statistics vs. ML
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(cache=TRUE, autodep=TRUE, message=FALSE, fig.align='center')
+knitr::opts_chunk$set(cache=TRUE, autodep=TRUE, message=FALSE, warning = FALSE,
+                      fig.align='center')
 library(tidyverse)
 theme_set(theme_minimal(base_family="Times"))
 green = '#00AF64'
@@ -224,9 +232,10 @@ $$\Rightarrow Y_i = X_i^{\top}\beta + \epsilon_i$$.
 There's generally no reason to make this assumption.
 
 We'll examine a few cases:
-1. $f_*$ is linear, low dimensions.
-2. $f_*$ is ~~not~~ linear, but we use a linear model anyway
-3. $f_*$ is linear, high dimensions.
+
+1. $f_*$ is linear, low dimensions.  
+2. $f_*$ is ~~not~~ linear, but we use a linear model anyway  
+3. $f_*$ is linear, high dimensions.  
 4. $f_*$ isn't linear, high dimensions.
 
 Important:
@@ -259,6 +268,7 @@ Let $x_i \in \R^p$, $p<n$.
 If $f_*$ is linear, and $\epsilon_i \sim N(0,\sigma^2)$ (independent)
 
 Then all the good things happen:
+
 1. $R(\hat f) = \sigma^2\left[1 + \frac{p}{n}\right]$
 2. $\norm{\beta_*-\hat\beta}_2^2 = O_p(p/n)$
 3. Coefficient estimates are normally distributed.
@@ -441,7 +451,7 @@ is the associated Vandermonde matrix.
 This matrix is well known for being numerically unstable
 
 
-\script{Letting $\X = UDV^{\top}$, this means that $d_1/d_p \rightarrow \infty$}
+(Letting $\X = UDV^{\top}$, this means that $d_1/d_p \rightarrow \infty$)
 
 Hence $$\norm{(\mathbb{X}^{\top}\mathbb{X})^{-1}}_2 = \frac{1}{d_p^2}$$
 grows larger, where here $\norm{\cdot}_2$ is the spectral (operator)
@@ -457,16 +467,15 @@ Fitting the full
 least squares model, even in low dimensions, can lead to poor
 prediction/estimation performance.
 
-<!--
 
 ## Big data regime
 
-[Big data]{style="color: orangemain"}: The computational complexity
+_Big data:_ The computational complexity
 scales extremely quickly. This means that procedures that are feasible
 classically are not for large data sets
 
 
-[[Example:]{style="color: greenmain"}]{.smallcaps} Fit $\hat\beta_{LS}$
+_Example:_ Fit $\hat\beta_{LS}$
 with $\mathbb{X}\in \mathbb{R}^{ n \times p}$. Next fit $\hat\beta_{LS}$
 with $\mathbb{X}\in \mathbb{R}^{ 3n \times 4p}$
 
@@ -474,59 +483,17 @@ with $\mathbb{X}\in \mathbb{R}^{ 3n \times 4p}$
 The second case will take $\approx$ $(3*4^2) = 48$ times longer to
 compute, as well as $\approx 12$ times as much memory!
 
-(Actually, for software such as [R]{style="color: brick"} it might take
+(Actually, for software such as `R` it might take
 36 times as much memory, though there are data structures specifically
 engineered for this purpose that update objects 'in place')
 
-## Conclusion
-
-\leavevmode
-\small
-\color{brick}
-\verbatim
-p = 300; n = 10000 Y = rnorm(n); X = matrix(rnorm(n\*p),nrow=n,ncol=p)
-start = proc.time()\[3\] out = lm(Y .,data=data.frame(X)) end =
-proc.time()\[3\] smallTime = end - start
-
-n = nMultiple\*n; nMultiple = 3 p = pMultiple\*p; pMultiple = 4 Y =
-rnorm(n); X = matrix(rnorm(n\*p),nrow=n,ncol=p) start = proc.time()\[3\]
-out = lm(Y .,data=data.frame(X)) end = proc.time()\[3\] bigTime = end -
-start \> print(bigTime/smallTime) elapsed 38.61458 \>
-print(nMultiple\*pMultiple\*\*2) \[1\] 48
-
-## Example big data problem
-
-\centering
-![image](../figures/watsonEbayAuction){width="4.75in"}
-
-## Example big data problem
-
-Buyer:
-
-\centering
-![image](../figures/watsonEbayCommentBuyer){width="4.65in"}\
-
-
-Seller:
-
-\centering
-![image](../figures/watsonEbayCommentSeller){width="4.65in"}
-
-\vspace{.3in}
-The data ($\sim$750 Gb, millions of rows, thousands of columns):
-
-\tiny
-  ------------ ----- -------- ---------------------------------------------- ------ -------- -------------------- -- -- -- -- -- -- -- -- -- -- --
-  User         ID    Rating   Comment                                        Role   WinBid   SellerID                                           
-  dorkyporky   134   1        fast delivery\.....very good seller\...AAA++   B      15.51    princesskitten2001                                 
-  ------------ ----- -------- ---------------------------------------------- ------ -------- -------------------- -- -- -- -- -- -- -- -- -- -- --
 
 ## High dimensional regime
 
-[High dimensional]{style="color: brick"}: These problems tend to have
-many of the computational problems as [Big
-data]{style="color: orangemain"}, as well as a [rank
-problem]{style="color: greenmain"}:
+_High dimensional:_ These problems tend to have
+many of the computational problems as "Big
+data", as well as a "rank
+problem"
 
 
 Suppose $\mathbb{X}\in \mathbb{R}^{n \times p}$ and $p > n$
@@ -539,19 +506,281 @@ $\mathbb{X}\hat{\beta} = Y$:
 
 -   has an infinite number of solutions
 
+```{r, echo=FALSE, fig.width=12,fig.height=6}
+x = -200:200/100
+df = data.frame(x = x, low = x^2, 
+                high = x^2*(abs(x)>=1) + (abs(x)<1))
+df %>% gather(key='dim',value='value',-x) %>%
+  ggplot(aes(x=x,y=value)) + geom_line(aes(color=dim),size=2) + 
+  facet_wrap(~dim, strip.position = 'bottom') + scale_color_manual(values=colvec) +
+  theme(axis.title=element_blank(),
+        axis.text=element_blank(),
+        axis.ticks=element_blank(),
+        legend.position = 'none',
+        strip.text = element_text(size=18))
+```
 
-## High dimensional regime: Example
+# High dimensional linear methods
+
+## Theoretical meanings
+
+1. Low dimensional
+    - finite sample $p<n$
+    - asymptotics $p/n \rightarrow 0$
+2. High dimensional
+    - finite sample $n>p$
+    - asymptotics $p/n \rightarrow \infty$
+3. "Big data"
+    - finite sample $n$ or $p$ or both are huge
+    - no real asymptotic interpretation
+
+## Approaches for big data
+
+1. Reduce the dimension. Try PCA on the features, cluster features, screen the features.
+
+2. Use all the covariates, but shrink the coefficients.
+
+3. Select some useful covariates, throw away the rest.
+
+## Shrinkage
+
+One way to do this for regression is to solve (say):
+\[
+\begin{aligned}
+\min_\beta &\frac{1}{n}\sum_i (y_i-x'_i \beta)^2 \\
+\mbox{s.t.} & \sum_j \beta^2_j < t
+\end{aligned}
+\]
+for some $t>0$.
+
+* This is called "ridge regression".
+
+* The ~~minimizer~~ of this problem is called $\brt$
+
+Compare this to least squares:
+\[
+\begin{aligned}
+\min_\beta &\frac{1}{n}\sum_i (y_i-x'_i \beta)^2 \\
+\mbox{s.t.} & \beta \in \R^p
+\end{aligned}
+\]
+
+## Geometry of ridge regression (2 dimensions)
+
+```{r plotting-functions, echo=FALSE}
+library(mvtnorm)
+normBall <- function(q=1, len=1000){
+  tg = seq(0,2*pi, length=len)
+  out = data.frame(x = cos(tg)) %>%
+    mutate(b=(1-abs(x)^q)^(1/q), bm=-b) %>%
+    gather(key='lab', value='y',-x)
+  out$lab = paste0('"||" * beta * "||"', '[',signif(q,2),']')
+  return(out)
+}
+
+ellipseData <- function(n=100,xlim=c(-2,3),ylim=c(-2,3), 
+                        mean=c(1,1), Sigma=matrix(c(1,0,0,.5),2)){
+  df = expand.grid(x=seq(xlim[1],xlim[2],length.out = n),
+                   y=seq(ylim[1],ylim[2],length.out = n))
+  df$z = dmvnorm(df, mean, Sigma)
+  df
+}
+lballmax <- function(ed,q=1,tol=1e-6){
+  ed = filter(ed, x>0,y>0)
+  for(i in 1:20){
+    ff = abs((ed$x^q+ed$y^q)^(1/q)-1)<tol
+    if(sum(ff)>0) break
+    tol = 2*tol
+  }
+  best = ed[ff,]
+  best[which.max(best$z),]
+}
+```
+
+```{r,echo=FALSE}
+nb = normBall(2)
+ed = ellipseData()
+bols = data.frame(x=1,y=1)
+bhat = lballmax(ed, 2)
+ggplot(nb,aes(x,y)) + xlim(-2,2) + ylim(-2,2) + geom_path(color=red) + 
+  geom_contour(mapping=aes(z=z), color=blue, data=ed, bins=7) +
+  geom_vline(xintercept = 0) + geom_hline(yintercept = 0) + 
+  geom_point(data=bols) + coord_equal() +
+  geom_label(data=bols, mapping=aes(label=bquote('hat(beta)[ls]')), parse=TRUE,
+             nudge_x = .3, nudge_y = .3) +
+  geom_point(data=bhat) + xlab(expression(beta[1])) + ylab(expression(beta[2])) + 
+  geom_label(data=bhat, mapping=aes(label=bquote('hat(beta)[rt]')), parse=TRUE,
+             nudge_x = -.4, nudge_y = -.4)
+```
+
+## Ridge regression
+
+An equivalent way to write
+\[
+\brt = \arg \min_{ || \beta ||_2^2 \leq t} \frac{1}{n}\sum_i (y_i-x'_i \beta)^2
+\]
+
+is in the ~~Lagrangian~~ form
+
+\[
+\brl = \arg \min_{ \beta} \frac{1}{n}\sum_i (y_i-x'_i \beta)^2 + \lambda || \beta ||_2^2.
+\]
+
+For every $\lambda$ there is a unique $t$ (and vice versa) that makes 
+\[
+\brt = \brl
+\]
+
+Observe:
+
+* $\lambda = 0$ (or $t = \infty$) makes $\brl = \bls$
+* Any $\lambda > 0$ (or $t <\infty$)  penalizes larger values of $\beta$, effectively shrinking them.
 
 
-[^1]: Note: sometimes we integrate with respect to $\mathcal{D}$ only,
-    $Z$ only, neither (loss), or both.
+Note: $\lambda$ and $t$ are known as ~~tuning parameters~~
 
-[^2]: More on this later
+## Ridge regression path
 
-[^3]: This should be compared with the variance computation in equation
-    ([\[eq:var\]](#eq:var){reference-type="ref" reference="eq:var"})
+```{r load-data, echo=FALSE}
+prostate = read.table("http://statweb.stanford.edu/~tibs/ElemStatLearn/datasets/prostate.data", header = TRUE)
+Y = prostate$lpsa
+X = as.matrix(prostate[,names(prostate)!=c('lpsa','train')])
+n = length(Y)
+p = ncol(X)
+
+library(glmnet)
+ridge = glmnet(x=X,y=Y,alpha=0)
+df = data.frame(as.matrix(t(ridge$beta)))
+df$lambda = ridge$lambda
+gather(df, key='predictor',value='coefficient',-lambda) %>%
+  ggplot(aes(x=lambda,y=coefficient,color=predictor)) + geom_path() + 
+  scale_x_log10() + scale_color_brewer(palette = 'Set1')
+```
 
 
--->
+## Least squares is invariant to rescaling, regularized methods aren't
+
+Let's multiply our design matrix by a factor of 10 to get $\widetilde{\X} = 10\X$.  
+
+Then:
+\[
+\widetilde{\beta}_{\textrm{ls}} = (\widetilde{\X}^{\top} \widetilde{\X})^{-1} \widetilde{\X}^{\top} Y = \frac{1}{10}(\widetilde{\X}^{\top} \widetilde{\X})^{-1} \widetilde{\X}^{\top} Y = 
+\frac{\widehat\beta_{\textrm{ls}}}{10}
+\]
+
+So, multiplying our data by ten just results in our estimates being reduced by one tenth.  
+Hence, any prediction is left unchanged:
+\[
+\widetilde{\X}\widetilde\beta_{\textrm{ls}} = \X \bls
+\]
+
+This means, for instance, if we have a covariate measured in miles, then we will get the "same" answer if we change it to kilometers
+
+
+* `lm.ridge` automatically scales every column of $\X$ to have mean zero and Euclidean norm 1.
+
+* It also centers $Y$.
+
+* Together, this means there is no intercept. (We don't penalize the intercept)
+
+* In `R`: `scale(X)` defaults to mean 0, SD 1. But you can change either.
+
+* Another version is in the package `glmnet`. More on this in a bit.
+
+## Solving the minimization
+
+* One nice thing about ridge regression is that it has a closed-form solution (like OLS)
+
+\[
+\brl = (\X'\X + \lambda I)^{-1}\X'Y
+\]
+
+* This is easy to calculate in `R` for any $\lambda$. But you need to recalculate for each $\lambda$.
+
+* Computations and interpretation are simplified if we examine the Singular Value Decomposition of $\X = UDV'$.
+
+* Then,
+
+\[
+\brl = (\X'\X + \lambda I)^{-1}\X'Y = (VD^2V' + \lambda I)^{-1}VDU'Y 
+= V(D^2+\lambda I)^{-1} DU'Y.
+\]
+
+* For computations, now we only need to invert a diagonal matrix.
+
+* For interpretations, we can compare this to OLS:
+
+\[
+\bls = (\X'\X)^{-1}\X'Y = (VD^2V')^{-1}VDU'Y = VD^{-2}DU'Y = VD^{-1}U'Y
+\]
+
+* Notice that $\bls$ depends on $d_j/d_j^2$ while $\brl$ depends on $d_j/(d_j^2 + \lambda)$.
+
+* Ridge regression makes the coefficients smaller relative to OLS.
+
+* But if $\X$ has small singular values, ridge regression compensates with $\lambda$ in the denominator.
+
+_Finally,_
+
+* $p>n$, $(\X'\X+\lambda I_p)^{-1}$ requires $O(p^3)$ computations and $O(p^2)$ storage
+* But $X'(\X\X' + \lambda I_n)^{-1}$ requires $O(n^3)$ computations and $O(n^2)$ storage
+
+Searle's matrix identity shows that these are equal.
+
+## Ridge regression and multicollinearity
+
+Multicollinearity is a phenomenon in which a combination of predictor variables is extremely similar to another predictor variable. Some comments:
+
+* A better phrase that is sometimes used is "$\X$ is ill-conditioned"
+* It means that one of its columns is nearly (or exactly) a linear combination of other columns.  This is sometimes known as "(numerically) rank-deficient".
+* If $\X = U D V'$ is ill-conditioned, then some elements of $D$ are nearly zero
+* If we form $\bls= V D^{-1} U' Y$, then we see that the small
+entries of $D$ are now huge (due to the inverse).  This in turn creates a huge variance.
+* Recall: $\mathbb{V} \bls =  \sigma^2(\X'\X)^{-1} = \sigma^2 V D^{-2} V'$
+
+
+Ridge Regression fixes this problem by preventing the division by a near zero number
+
+Conclusion: $(\X^{\top}\X)^{-1}$ can be really unstable, while $(\X^{\top}\X + \lambda I)^{-1}$ is not.
+
+## Ridge theory
+
+Recalling that $\beta'_*x$ is the best linear approximation to $f_*(x)$
+
+If $\norm{x}_\infty< r$,  [@HsuKakade2014],
+\[
+R(\hat\beta_\lambda) - R(\beta_*) \leq \left(1+ O\left(\frac{1+r^2/\lambda}{n}\right)\right)
+\frac{\lambda\norm{\beta_*}_2^2}{2} + \frac{\sigma^2\tr{\Sigma}}{2n\lambda}
+\]
+
+Optimizing over $\lambda$, and setting $B=\norm{\beta_*}$ gives
+\[
+R(\hat\beta) - R(\beta_*) \leq \sqrt{\frac{\sigma^2r^2B^2}{n}\left(1+O(1/n)\right)} + 
+O\left(\frac{r^2B^2}{n}\right)
+\]
+
+Lower bound
+\[
+\inf_{\hat\beta}\sup_{\beta_*} R(\hat\beta) - R(\beta_*) \geq C\sqrt{\frac{\sigma^2r^2B^2}{n}}
+\]
+
+We call this behavior _rate minimax_: essential meaning, 
+\[
+R(\hat\beta) - R(\beta_*) = O\left(\inf_{\hat\beta}\sup_{\beta_*} R(\hat\beta) - R(\beta_*)\right)
+\]
+
+In this setting, Ridge regression does as well as we could hope, up to constants.
+
+## Bayes interpretation
+
+If 
+
+1. $Y=X'\beta + \epsilon$, 
+2. $\epsilon\sim N(0,\sigma^2)$ 
+3. $\beta\sim N(0,\tau^2 I_p)$,
+
+Then, the posterior mean (median, mode) is the ridge estimator with $\lambda=\sigma^2/\tau^2$.
+
+
 
 ## References
