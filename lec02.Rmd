@@ -3,10 +3,10 @@ title: "Lecture 2"
 author: "DJM"
 date: "2 October 2018"
 output:
+  pdf_document: default
   slidy_presentation:
     css: http://mypage.iu.edu/~dajmcdon/teaching/djmRslidy.css
     font_adjustment: 0
-  pdf_document: default
 bibliography: booth-refs.bib
 ---
 
@@ -781,6 +781,313 @@ If
 
 Then, the posterior mean (median, mode) is the ridge estimator with $\lambda=\sigma^2/\tau^2$.
 
+## In-class exercise
 
+# Subset selection methods
+
+
+# Lasso and family
+
+## Can we get the best of both worlds?
+
+To recap:
+
+* Deciding which predictors to include, adding quadratic terms, or interactions is ~~model selection~~.
+
+* Ridge regression provides regularization, which trades off bias and variance and also stabilizes multicollinearity.  
+
+
+Ridge regression: $\min ||\mathbb{Y}-\X\beta||_2^2 \textrm{ subject to } ||\beta||_2^2 \leq t$ 
+
+Best linear regression model: $\min || \mathbb{Y}-\X\beta||_2^2 \textrm{ subject to } ||\beta||_0 \leq t$
+
+$||\beta||_0$ is the number of nonzero elements in $\beta$
+
+Finding the best linear model  is a nonconvex optimization problem (In fact, it is NP-hard)
+
+Ridge regression is convex (easy to solve), but doesn't do model selection
+
+Can we somehow "interpolate" to get both?
+
+## Geometry of convexity
+
+```{r,echo=FALSE}
+nbs = list()
+nbs[[1]] = normBall(0,1)
+qs = c(.5,.75,1,1.5,2)
+for(ii in 2:6) nbs[[ii]] = normBall(qs[ii-1])
+nbs = bind_rows(nbs)
+nbs$lab = factor(nbs$lab, levels = unique(nbs$lab))
+seg = data.frame(lab=levels(nbs$lab)[1],
+                 x0=c(-1,0),x1=c(1,0),y0=c(0,-1),y1=c(0,1))
+levels(seg$lab) = levels(nbs$lab)
+ggplot(nbs, aes(x,y)) + geom_path(size=1.2) + facet_wrap(~lab,labeller = label_parsed) + 
+  geom_segment(data=seg,aes(x=x0,xend=x1,y=y0,yend=y1),size=1.2) + 
+  coord_equal() + geom_vline(xintercept = 0,size=.5) + 
+  geom_hline(yintercept = 0,size=.5) +
+  theme(strip.text.x = element_text(size = 12))
+```
+
+## The best of both worlds
+
+```{r, echo=FALSE}
+nb = normBall(1)
+ed = ellipseData()
+bols = data.frame(x=1,y=1)
+bhat = lballmax(ed, 1)
+ggplot(nb,aes(x,y)) + xlim(-2,2) + ylim(-2,2) + geom_path(color=red) + 
+  geom_contour(mapping=aes(z=z), color=blue, data=ed, bins=7) +
+  geom_vline(xintercept = 0) + geom_hline(yintercept = 0) + 
+  geom_point(data=bols) + coord_equal() +
+  geom_label(data=bols, mapping=aes(label=bquote('hat(beta)[ls]')), parse=TRUE,
+             nudge_x = .3, nudge_y = .3) +
+  geom_point(data=bhat) + xlab(expression(beta[1])) + ylab(expression(beta[2])) + 
+  geom_label(data=bhat, mapping=aes(label=bquote('hat(beta)[lt]')), parse=TRUE,
+             nudge_x = -.4, nudge_y = -.4)
+```
+
+This regularization set...
+
+* ... is convex (computationally efficient)
+* ... has corners (performs model selection)
+
+
+
+## $\ell_1$-regularized regression
+
+Known as 
+
+* "lasso"
+* "basis pursuit"
+
+The estimator satisfies
+\[
+\blt = \arg\min_{ ||\beta||_1 \leq t}  ||\mathbb{Y}-\X\beta||_2^2 
+\]
+
+In its corresponding Lagrangian dual form:
+\[
+\bll = \arg\min_{\beta} ||\mathbb{Y}-\X\beta||_2^2 + \lambda ||\beta||_1
+\]
+
+
+## Lasso
+
+While the ridge solution can be easily computed
+\[
+\brl = \arg\min_{\beta} ||\mathbb{Y}-\X\beta||_2^2 + \lambda ||\beta||_2^2 = (\X^{\top}\X + \lambda I)^{-1} \X^{\top}Y
+\]
+
+the lasso solution
+
+\[
+\bll = \arg\min_{\beta} ||\mathbb{Y}-\X\beta||_2^2 + \lambda ||\beta||_1 = \; ??
+\]
+doesn't have a closed form solution.
+
+
+However, because the optimization problem is convex, there exist efficient algorithms for computing it. 
+
+We'll talk algorithms next week.
+
+## Coefficient path: ridge vs lasso
+
+```{r,echo=FALSE}
+library(lars)
+lasso = glmnet(x=X,y=Y)
+ridge = glmnet(x=X,y=Y,alpha=0)
+df = data.frame(as.matrix(t(ridge$beta)))
+df$norm = sqrt(rowSums(df^2))
+df1 = data.frame(as.matrix(t(lasso$beta)))
+df1$norm = rowSums(abs(df1))
+df$method = 'ridge'
+df1$method = 'lasso'
+out = bind_rows(df[-1,],df1)
+gather(out, key='predictor',value='coefficient',-norm,-method) %>%
+  ggplot(aes(x=norm,y=coefficient,color=predictor)) + geom_path() + 
+  facet_wrap(~method,scales = 'free_x') + 
+  #scale_x_log10() + 
+  scale_color_brewer(palette = 'Set1')
+```
+
+## Packages
+
+There are two main `R` implementations for finding lasso
+
+
+* Using `glmnet`: `lasso.out = glmnet(X, Y, alpha=1)`.  
+* Setting `alpha=0` gives ridge regression (as does `lm.ridge` in the `MASS` package)
+* Setting `alpha` $\in (0,1)$ gives a method called the "elastic net" which combines ridge regression and lasso.
+* Alternatively, there is  `lars`: `lars.out = lars(X, Y)`
+* `lars` also other things called "Least angle", "forward stepwise", and "forward stagewise" regression
+
+## Two packages
+
+1. `lars` (this is the first one)
+2. `glmnet` (this one is faster)
+
+These use different algorithms, but both compute the ~~path~~ for a range of $\lambda$.
+
+`lars`   
+- starts with an empty model and adds coefficients until saturated  
+- Uses the entire sequence of $\lambda$ based on the nature of the optimization problem.  
+- Doesn't support other likelihoods  
+- Slower
+- The path returned by `lars` as more useful than that returned by `glmnet`.
+
+`glmnet`  
+- starts with an empty model and examines each value of $\lambda$ using previous values as "warm starts".  
+- $\lambda \in \left[\epsilon\norm{\X'Y}_\infty,\ \norm{\X'Y}_\infty\right)$ for some small $\epsilon$  
+- It is generally much faster than `lars` and uses lots of other tricks (as well as compiled code) for extra speed.  
+- Easier to cross validate sensibly  
+- Can ocassionaly give boundary solutions, or too many non-zero coefs
+
+## Lasso paths
+
+```{r}
+lasso = glmnet(X,Y)
+lars.out = lars(X,Y)
+par(mfrow=c(1,2))
+plot(lasso)
+plot(lars.out,main='')
+```
+
+## Lasso theory under strong conditions
+
+__Support recovery__ [@Wainwright2009], see also [@MeinshausenBuhlmann2006; @ZhaoYu2006]
+
+1. The truth is linear.
+2. $\norm{\X'_{S^c}\X_S (\X'_S\X_S)^{-1}}_\infty < 1-\epsilon.$
+3. $\lambda_{\min} (\X'_S\X_S) \geq C_{\min} > 0$.
+4. The columns of $\X$ have 2-norm $n$.
+5. The noise is iid Normal.
+6. $\lambda_n$ satisfies $\frac{n\lambda^2}{\log(p-s)} \rightarrow \infty$.
+7. $\min_j \{ |\beta_j| : j \in S\} \geq \rho_n > 0$ and 
+\[
+\rho_n^{-1} \left( \sqrt{\frac{\log s}{n}}+ \lambda_n\norm{(\X'_S\X_S)^{-1}}_\infty \right)\rightarrow 0
+\]
+
+Then, $P(\textrm{supp}(\bll) = \textrm{supp}(\beta_*))\rightarrow 1$.
+
+__Estimation consistency__ [@negahban2010unified] also [@MeinshausenYu2009]
+
+1. The truth is linear.
+2. $\exists \kappa$ such that for all vectors $\theta\in\R^p$ that satisfy 
+$\norm{\theta_{S^C}}_1 \leq 3\norm{\theta_S}_1$, we have $\norm{X\theta}_2^2/n \geq \kappa\norm{\theta}_2^2$ (Compatibility)
+3. The columns of $\X$ have 2-norm $n$.
+4. The noise is iid sub-Gaussian.
+5. $\lambda_n >4\sigma \sqrt{\log (p)/n}$.
+
+Then, with probability at least $1-c\exp(-c'n\lambda_n^2)$,  
+\[
+\norm{\bll-\beta_*}_2^2 \leq \frac{64\sigma^2}{\kappa^2}\frac{s\log p}{n}.
+\]
+
+__Warning__: These conditions are very strong, uncheckable in practice, unlikely to be true for real datasets. But theory of this type is the standard for these procedures.
+
+## Lasso under weak/no conditions
+
+If $Y$ and $X$ are bounded by $B$, then with probability at least $1-\delta^2$,
+\[
+R_n(\blt) - R_n(\beta_*) \leq \sqrt{\frac{16(t+1)^4B^2}{n}\log\left(\frac{\sqrt{2}p}{\delta}\right)}.
+\]
+
+This is a simple version of a result in [@GreenshteinRitov2004].
+
+Note that it applies to the $L_1$ version rather than the Lagrangian formulation.
+
+The boundedness can be replaced by sub-Gaussian or other conditions.
+
+@bartlett2012 derives the same rate for the Lagrangian form up to log factors.
+
+Again, this rate is (nearly) optimal:
+\[
+c\sqrt{\frac{s}{n}} < C\sqrt{\frac{s\log p}{n}}.
+\]
+
+$\log p$ is the penalty you pay for selection.
+
+# Model selection
+
+## Choosing the lambda
+
+* You have to choose $\lambda$ in lasso or in ridge regression
+* lasso selects a model (by setting coefficients to zero), but the value of $\lambda$ determines how many/which.
+* All of these packages come with CV built in.
+* However, the way to do it differs from package to package (whomp whomp)
+
+## Ridge regression, `lm.ridge` version
+
+
+```{r}
+library(MASS)
+par(mfrow=c(1,1))
+# 1. Estimate the model (note, this uses a formula, and you must supply lambda)
+ridge.out = lm.ridge(lpsa~.-train, data=prostate, lambda = 0:100)
+# 2. Plot it
+plot(ridge.out)
+# (2a). If you chose lambda poorly, this will look bad, try again
+# 3. Choose lambda using GCV
+plot(ridge.out$lambda,ridge.out$GCV,ty='l')
+# 4. If there's a minimum, FIND IT, else try again
+best.lam = which.min(ridge.out$GCV)
+# 5. Return the coefs/predictions for the best model
+coefs = coefficients(ridge.out)[best.lam,]
+preds = as.matrix(dplyr::select(prostate,-lpsa,-train)) %*% coefs[-1] + coefs[1]
+```
+
+## `glmnet` version (lasso or ridge)
+
+
+
+```{r}
+# 1. Estimate cv and model at once, no formula version
+lasso.glmnet = cv.glmnet(X,Y)
+# 2. Plot the coefficient path
+plot(lasso.glmnet$glmnet.fit) # the glmnet.fit == glmnet(X,Y)
+# 3. Choose lambda using CV
+plot(lasso.glmnet) #a different plot method for the cv fit
+# 4. If the dashed lines are at the boundaries, redo it with a better set of lambda
+best.lam = lasso.glmnet$lambda.min # the value, not the location (or lasso$lambda.1se)
+# 5. Return the coefs/predictions for the best model
+coefs.glmnet = coefficients(lasso.glmnet, s = best.lam)
+preds.glmnet = predict(lasso.glmnet, newx = X, s = best.lam) # must supply `newx`
+```
+
+## `lars` version
+
+This is incredibly difficult to cross-validate. 
+
+The path changes from fold to fold, so things can get hairy.
+
+In principle, the following should work.
+
+
+
+```{r}
+# 1. Estimate cv, no formula version
+lasso.lars.cv = cv.lars(X,Y) # also plots it
+# 2. Choose lambda using CV
+best.lam.lars = lasso.lars.cv$index[which.min(lasso.lars.cv$cv)] # the location, not the value
+# 3. Estimate the lasso and plot
+lasso.lars = lars(X,Y) # still the whole path
+# 5. Return the coefs/predictions for the best model
+coefs.lars = coefficients(lasso.lars, s = best.lam.lars, mode='fraction') # annoying mode argument is required
+preds.lars = predict(lasso.lars, newx=X, s = best.lam.lars, mode='fraction') # must supply `newx`
+```
+
+## Paths with chosen lambda (lasso and ridge)
+
+```{r}
+ridge.glmnet = cv.glmnet(X,Y,alpha=0,lambda.min.ratio=1e-10) # added to get a minimum
+par(mfrow=c(1,2))
+plot(ridge.glmnet)
+plot(lasso.glmnet)
+best.lam.ridge = ridge.glmnet$lambda.min
+plot(ridge.glmnet$glmnet.fit,xvar='lambda', main='Ridge (glmnet)')
+abline(v=log(best.lam.ridge))
+plot(lasso.glmnet$glmnet.fit,xvar='lambda', main='Lasso (glmnet)')
+abline(v=log(best.lam))
+```
 
 ## References
