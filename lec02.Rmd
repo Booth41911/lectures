@@ -3,10 +3,10 @@ title: "Lecture 2"
 author: "DJM"
 date: "2 October 2018"
 output:
+  pdf_document: default
   slidy_presentation:
     css: http://mypage.iu.edu/~dajmcdon/teaching/djmRslidy.css
     font_adjustment: 0
-  pdf_document: default
   html_document:
     df_print: paged
 bibliography: booth-refs.bib
@@ -126,11 +126,11 @@ Suppose $X\sim N(\mu,1)$.
 
 ## MSE
 
-Mean Squared Error (MSE). Suppose $\theta, \widehat\theta$, define
+__Mean Squared Error (MSE)__. Suppose $\theta, \widehat\theta$, define
 $$\begin{aligned}
 \mathbb{E}\!\left[ \left(\theta - \widehat\theta \right)^2 \right] = \int \cdots \int \left[ \left( \widehat\theta(x_1, \ldots, x_n) - \theta\right) f(x_1;\theta)^2 \cdots f(x_n;\theta) \right] dx_1 \cdots dx_n.\end{aligned}$$
 
-Bias and Variance The bias is $$\begin{aligned}
+__Bias and Variance__ The bias is $$\begin{aligned}
 B = \mathbb{E}\!\left[\widehat\theta\right] - \theta,\end{aligned}$$ and
 variance is $$\begin{aligned}
 V = \Var{\widehat\theta}.\end{aligned}$$
@@ -392,7 +392,7 @@ independent Gaussian model, has the other nice properties listed above.
 Does that necessarily mean it is any good?
 
 
-Write $X= U D V'$ for the SVD of the design matrix $X$.
+Write $\X= U D V'$ for the SVD of the design matrix $\X$.
 
 Then
 $\Var{\hat\beta_{LS}}  \propto (X^{\top}X)^{-1}  
@@ -430,8 +430,8 @@ ggplot(data.frame(x,y), aes(x=x,y=y)) + geom_point() + coord_cartesian(ylim=c(-3
   scale_color_brewer(palette='Set1') + stat_function(fun=function(x) sin(2*pi*x))
 ```
 
-Using a Taylor's series, for all $X$
-$$\sin(X) = \sum_{q = 0}^\infty \frac{(-1)^qX^{2q+1}}{(2q + 1)!}  = \Phi(X)^{\top}\beta$$
+Using a Taylor's series, for all $x$
+$$\sin(x) = \sum_{q = 0}^\infty \frac{(-1)^q x^{2q+1}}{(2q + 1)!}  = \Phi(X)^{\top}\beta$$
 Additional polynomial terms will __reduce__ the bias but the variance can get nasty.
 
 
@@ -439,9 +439,9 @@ Additional polynomial terms will __reduce__ the bias but the variance can get na
 ## Returning to polynomial example: Variance
 
 The least squares solution is given by solving
-$\min\norm{X\beta - Y}_2^2$
+$\min\norm{\X\beta - Y}_2^2$
 
-$$X=
+$$\X=
 \begin{bmatrix}
 1 & X_1 & \ldots & X_1^{p-1} \\
    & \vdots && \\
@@ -530,7 +530,7 @@ df %>% gather(key='dim',value='value',-x) %>%
     - finite sample $p<n$
     - asymptotics $p/n \rightarrow 0$
 2. High dimensional
-    - finite sample $n>p$
+    - finite sample $p>n$
     - asymptotics $p/n \rightarrow \infty$
 3. "Big data"
     - finite sample $n$ or $p$ or both are huge
@@ -783,7 +783,6 @@ If
 
 Then, the posterior mean (median, mode) is the ridge estimator with $\lambda=\sigma^2/\tau^2$.
 
-## In-class exercise
 
 # Subset selection methods
 
@@ -824,16 +823,17 @@ This result is due to @FosterGeorge1994.
 2. $\lambda = C\sigma^2\log p.$
 3. $|\beta_*| = s$
 \[
-\frac{\Expect{\norm{\X\beta_*-\X\hat\beta}}/n}{s\sigma^2/n} \leq 4\log p + 2 + o(1).
+\frac{\Expect{\norm{\X\beta_*-\X\hat\beta}_2^2}/n}{s\sigma^2/n} \leq 4\log p + 2 + o(1).
 \]
 
 They, also prove a lower bound 
 \[
-\inf_{\hat\beta}\sup_{\X,\beta_*} \frac{\Expect{\norm{\X\beta_*-\X\hat\beta}}/n}{s\sigma^2/n} \geq 2\log p - o(\log p).
+\inf_{\hat\beta}\sup_{\X,\beta_*} \frac{\Expect{\norm{\X\beta_*-\X\hat\beta}_2^2}/n}{s\sigma^2/n} \geq 2\log p - o(\log p).
 \]
 
 ~~Important:~~ 
-- even if we could compute the subset selection estimator at scale, it’s clear that we would want to
+
+- even if we could compute the subset selection estimator at scale, it’s not clear that we would want to
 - (Many people assume that we would.) 
 - theory provides an understanding of the performance of various estimators under typically idealized conditions
 
@@ -849,9 +849,9 @@ To recap:
 * Ridge regression provides regularization, which trades off bias and variance and also stabilizes multicollinearity.  
 
 
-Ridge regression: $\min ||\mathbb{Y}-\X\beta||_2^2 \textrm{ subject to } ||\beta||_2^2 \leq t$ 
+Ridge regression: $\min ||Y-\X\beta||_2^2 \textrm{ subject to } ||\beta||_2^2 \leq t$ 
 
-Best linear regression model: $\min || \mathbb{Y}-\X\beta||_2^2 \textrm{ subject to } ||\beta||_0 \leq t$
+Best linear regression model: $\min ||Y-\X\beta||_2^2 \textrm{ subject to } ||\beta||_0 \leq t$
 
 $||\beta||_0$ is the number of nonzero elements in $\beta$
 
@@ -914,12 +914,12 @@ Known as
 
 The estimator satisfies
 \[
-\blt = \arg\min_{ ||\beta||_1 \leq t}  ||\mathbb{Y}-\X\beta||_2^2 
+\blt = \arg\min_{ ||\beta||_1 \leq t}  ||Y-\X\beta||_2^2 
 \]
 
 In its corresponding Lagrangian dual form:
 \[
-\bll = \arg\min_{\beta} ||\mathbb{Y}-\X\beta||_2^2 + \lambda ||\beta||_1
+\bll = \arg\min_{\beta} ||Y-\X\beta||_2^2 + \lambda ||\beta||_1
 \]
 
 
@@ -927,13 +927,13 @@ In its corresponding Lagrangian dual form:
 
 While the ridge solution can be easily computed
 \[
-\brl = \arg\min_{\beta} ||\mathbb{Y}-\X\beta||_2^2 + \lambda ||\beta||_2^2 = (\X^{\top}\X + \lambda I)^{-1} \X^{\top}Y
+\brl = \arg\min_{\beta} ||Y-\X\beta||_2^2 + \lambda ||\beta||_2^2 = (\X^{\top}\X + \lambda I)^{-1} \X^{\top}Y
 \]
 
 the lasso solution
 
 \[
-\bll = \arg\min_{\beta} ||\mathbb{Y}-\X\beta||_2^2 + \lambda ||\beta||_1 = \; ??
+\bll = \arg\min_{\beta} ||Y-\X\beta||_2^2 + \lambda ||\beta||_1 = \; ??
 \]
 doesn't have a closed form solution.
 
