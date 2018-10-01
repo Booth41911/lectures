@@ -785,6 +785,56 @@ Then, the posterior mean (median, mode) is the ridge estimator with $\lambda=\si
 
 # Subset selection methods
 
+## Best subsets
+
+If we imagine that only a few predictors are relevant, we could solve
+\[
+\min_{\beta\in\R^p} \norm{Y-\X\beta}_2^2 + \lambda\norm{\beta}_0
+\]
+
+The $\ell_0$-norm counts the number of non-zero coefficients.
+
+This may or may not be a good thing to do.
+
+It is computationally infeasible if $p$ is more than about 20.
+
+Technically NP-hard (you must find the error of each of the $2^p$ models)
+
+Though see [@BertsimasKing2016] for a method of solving reasonably large cases via mixed integer programming.
+
+## Packages
+
+Because this is an NP-hard problem, we fall back on greedy algorithms.
+
+1. Forward stepwise
+2. Backward stepwise
+3. Add/remove
+
+All are implemented by the `regsubsets` function in the `leaps` package. 
+
+It also will do exhaustive search.
+
+## Theory
+
+This result is due to @FosterGeorge1994.
+
+1. If the truth is linear.
+2. $\lambda = C\sigma^2\log p.$
+3. $|\beta_*| = s$
+\[
+\frac{\Expect{\norm{\X\beta_*-\X\hat\beta}}/n}{s\sigma^2/n} \leq 4\log p + 2 + o(1).
+\]
+
+They, also prove a lower bound 
+\[
+\inf_{\hat\beta}\sup_{\X,\beta_*} \frac{\Expect{\norm{\X\beta_*-\X\hat\beta}}/n}{s\sigma^2/n} \geq 2\log p - o(\log p).
+\]
+
+~~Important:~~ 
+- even if we could compute the subset selection estimator at scale, it’s clear that we would want to
+- (Many people assume that we would.) 
+- theory provides an understanding of the performance of various estimators under typically idealized conditions
+
 
 # Lasso and family
 
@@ -1007,6 +1057,8 @@ c\sqrt{\frac{s}{n}} < C\sqrt{\frac{s\log p}{n}}.
 
 $\log p$ is the penalty you pay for selection.
 
+<!--
+
 # Model selection
 
 ## Choosing the lambda
@@ -1089,5 +1141,6 @@ abline(v=log(best.lam.ridge))
 plot(lasso.glmnet$glmnet.fit,xvar='lambda', main='Lasso (glmnet)')
 abline(v=log(best.lam))
 ```
+-->
 
 ## References
