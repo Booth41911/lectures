@@ -3,10 +3,12 @@ title: "Lecture 2"
 author: "DJM"
 date: "2 October 2018"
 output:
-  pdf_document: default
   slidy_presentation:
     css: http://mypage.iu.edu/~dajmcdon/teaching/djmRslidy.css
     font_adjustment: 0
+  pdf_document: default
+  html_document:
+    df_print: paged
 bibliography: booth-refs.bib
 ---
 
@@ -1143,4 +1145,23 @@ abline(v=log(best.lam))
 ```
 -->
 
-## References
+## The lasso universe
+
+![](gfx/wwlasso.jpg)
+
+- Grouped lasso (Yuan and Lin (2007), Meier et al. (2008)), where variables are included
+or excluded in groups.
+- Refitted lasso (e.g. Lederer 2013).  Takes the estimated model from lasso and fits the full
+least squares solution on selected covariates (less bias, more variance).
+- Dantzig selector (Candes, Tao (2007)), a slightly modified version of the lasso
+- The elastic net (Zou, Hastie (2005)), generally used for correlated variables that
+combines a ridge/lasso penalty.  Included in `glmnet`.  Fixes non-uniqueness problem
+of lasso (although, see Tibshirani (2013)).  
+- SCAD (Fan and Li (2005)), a non-convex version of lasso that adds a more severe variable selection penalty
+- $\sqrt{\textrm{lasso}}$ (Belloni et al. (2011)), claims to be tuning parameter free (but isn't).  Uses $||\cdot||_2$
+instead of $||\cdot||_2^2$ for the loss.
+- Generalized lasso (Tibshirani, Taylor (2011)).  Adds various additional penalty matrices to the penalty term (ie: 
+$||D\beta||_1$).  
+
+
+## Selected references
