@@ -3,10 +3,10 @@ title: "Lecture 2"
 author: "DJM"
 date: "2 October 2018"
 output:
-  pdf_document: default
   slidy_presentation:
     css: http://mypage.iu.edu/~dajmcdon/teaching/djmRslidy.css
     font_adjustment: 0
+  pdf_document: default
   html_document:
     df_print: paged
 bibliography: booth-refs.bib
@@ -1059,9 +1059,9 @@ c\sqrt{\frac{s}{n}} < C\sqrt{\frac{s\log p}{n}}.
 
 $\log p$ is the penalty you pay for selection.
 
-<!--
 
-# Model selection
+
+# Model selection (details later)
 
 ## Choosing the lambda
 
@@ -1143,7 +1143,7 @@ abline(v=log(best.lam.ridge))
 plot(lasso.glmnet$glmnet.fit,xvar='lambda', main='Lasso (glmnet)')
 abline(v=log(best.lam))
 ```
--->
+
 
 ## The lasso universe
 
