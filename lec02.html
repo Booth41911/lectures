@@ -611,12 +611,12 @@ R_n(\mathcal{P}) = \inf_{\widehat\theta} \sup_{P\in\mathcal{P}} \mathbb{E}_P[L(\
 R(\beta)-R(\beta_*) = (\beta-\beta_*)'\Sigma (\beta-\beta_*).
 \]</span></p>
 <p>Then, (simplified result), See Theorem 11.3 of <span class="citation">Györfi et al. (2002)</span>, <span class="math display">\[
-R(\beta) \leq C \left[R(\beta_*) + \frac{p \log n}{n}\right] 
+R(\widehat\beta_{ls}) \leq C \left[R(\beta_*) + \frac{p \log n}{n}\right] 
 \]</span></p>
 <p>Note that if the model were linear, <span class="math inline">\(R(\beta_*) = \sigma^2\)</span></p>
 <p>We also have a CLT <span class="citation">(see Berk et al. 2014)</span>: <span class="math display">\[
 \begin{aligned}
-\sqrt{n}(\widehat\beta-\beta_*) &amp; \rightsquigarrow N(0,\Gamma)\\
+\sqrt{n}(\widehat\beta_{ls}-\beta_*) &amp; \rightsquigarrow N(0,\Gamma)\\
 \Gamma &amp;= \Sigma^{-1} \mathbb{E}\left[ (Y-X\beta)^2 XX' \right] \Sigma^{-1}
 \end{aligned}
 \]</span></p>
@@ -802,7 +802,7 @@ Hence, any prediction is left unchanged: <span class="math display">\[
 <p><em>Finally,</em></p>
 <ul>
 <li><span class="math inline">\(p&gt;n\)</span>, <span class="math inline">\((\mathbb{X}'\mathbb{X}+\lambda I_p)^{-1}\)</span> requires <span class="math inline">\(O(p^3)\)</span> computations and <span class="math inline">\(O(p^2)\)</span> storage</li>
-<li>But <span class="math inline">\(X'(\mathbb{X}\mathbb{X}' + \lambda I_n)^{-1}\)</span> requires <span class="math inline">\(O(n^3)\)</span> computations and <span class="math inline">\(O(n^2)\)</span> storage</li>
+<li>But <span class="math inline">\(\mathbb{X}'(\mathbb{X}\mathbb{X}' + \lambda I_n)^{-1}\)</span> requires <span class="math inline">\(O(n^3)\)</span> computations and <span class="math inline">\(O(n^2)\)</span> storage</li>
 </ul>
 <p>Searle’s matrix identity shows that these are equal.</p>
 </div><div id="ridge-regression-and-multicollinearity" class="slide section level2">
@@ -821,11 +821,11 @@ Hence, any prediction is left unchanged: <span class="math display">\[
 <h1>Ridge theory</h1>
 <p>Recalling that <span class="math inline">\(\beta'_*x\)</span> is the best linear approximation to <span class="math inline">\(f_*(x)\)</span></p>
 <p>If <span class="math inline">\(\left\lVert x \right\rVert_\infty&lt; r\)</span>, <span class="citation">(Hsu, Kakade, and Zhang 2014)</span>, <span class="math display">\[
-R(\widehat\beta_\lambda) - R(\beta_*) \leq \left(1+ O\left(\frac{1+r^2/\lambda}{n}\right)\right)
+R(\widehat{\beta}_{r,\lambda}) - R(\beta_*) \leq \left(1+ O\left(\frac{1+r^2/\lambda}{n}\right)\right)
 \frac{\lambda\left\lVert \beta_* \right\rVert_2^2}{2} + \frac{\sigma^2\mbox{tr}(\Sigma)}{2n\lambda}
 \]</span></p>
 <p>Optimizing over <span class="math inline">\(\lambda\)</span>, and setting <span class="math inline">\(B=\left\lVert \beta_* \right\rVert\)</span> gives <span class="math display">\[
-R(\widehat\beta) - R(\beta_*) \leq \sqrt{\frac{\sigma^2r^2B^2}{n}\left(1+O(1/n)\right)} + 
+R(\widehat{\beta}_{r,\lambda}) - R(\beta_*) \leq \sqrt{\frac{\sigma^2r^2B^2}{n}\left(1+O(1/n)\right)} + 
 O\left(\frac{r^2B^2}{n}\right)
 \]</span></p>
 <p>Lower bound <span class="math display">\[
@@ -958,7 +958,8 @@ R(\widehat\beta) - R(\beta_*) = O\left(\inf_{\widehat\beta}\sup_{\beta_*} R(\wid
 - starts with an empty model and adds coefficients until saturated<br />
 - Uses the entire sequence of <span class="math inline">\(\lambda\)</span> based on the nature of the optimization problem.<br />
 - Doesn’t support other likelihoods<br />
-- Slower - The path returned by <code>lars</code> as more useful than that returned by <code>glmnet</code>.</p>
+- Slower<br />
+- The path returned by <code>lars</code> as more useful than that returned by <code>glmnet</code>.</p>
 <p><code>glmnet</code><br />
 - starts with an empty model and examines each value of <span class="math inline">\(\lambda\)</span> using previous values as “warm starts”.<br />
 - <span class="math inline">\(\lambda \in \left[\epsilon\left\lVert \mathbb{X}'Y \right\rVert_\infty,\ \left\lVert \mathbb{X}'Y \right\rVert_\infty\right)\)</span> for some small <span class="math inline">\(\epsilon\)</span><br />

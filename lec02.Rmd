@@ -3,10 +3,10 @@ title: "Lecture 2"
 author: "DJM"
 date: "2 October 2018"
 output:
+  pdf_document: default
   slidy_presentation:
     css: http://mypage.iu.edu/~dajmcdon/teaching/djmRslidy.css
     font_adjustment: 0
-  pdf_document: default
   html_document:
     df_print: paged
 bibliography: booth-refs.bib
@@ -293,7 +293,7 @@ R(\beta)-R(\beta_*) = (\beta-\beta_*)'\Sigma (\beta-\beta_*).
 
 Then, (simplified result), See Theorem 11.3 of @GyorfiKohler,
 \[
-R(\beta) \leq C \left[R(\beta_*) + \frac{p \log n}{n}\right] 
+R(\hat\beta_{ls}) \leq C \left[R(\beta_*) + \frac{p \log n}{n}\right] 
 \]
 
 Note that if the model were linear, $R(\beta_*) = \sigma^2$
@@ -301,7 +301,7 @@ Note that if the model were linear, $R(\beta_*) = \sigma^2$
 We also have a CLT [see @BerkBrown2014]:
 \[
 \begin{aligned}
-\sqrt{n}(\hat\beta-\beta_*) & \cdist N(0,\Gamma)\\
+\sqrt{n}(\hat\beta_{ls}-\beta_*) & \cdist N(0,\Gamma)\\
 \Gamma &= \Sigma^{-1} \Expect{(Y-X\beta)^2 XX'} \Sigma^{-1}
 \end{aligned}
 \]
@@ -725,7 +725,7 @@ This means, for instance, if we have a covariate measured in miles, then we will
 _Finally,_
 
 * $p>n$, $(\X'\X+\lambda I_p)^{-1}$ requires $O(p^3)$ computations and $O(p^2)$ storage
-* But $X'(\X\X' + \lambda I_n)^{-1}$ requires $O(n^3)$ computations and $O(n^2)$ storage
+* But $\X'(\X\X' + \lambda I_n)^{-1}$ requires $O(n^3)$ computations and $O(n^2)$ storage
 
 Searle's matrix identity shows that these are equal.
 
@@ -751,13 +751,13 @@ Recalling that $\beta'_*x$ is the best linear approximation to $f_*(x)$
 
 If $\norm{x}_\infty< r$,  [@HsuKakade2014],
 \[
-R(\hat\beta_\lambda) - R(\beta_*) \leq \left(1+ O\left(\frac{1+r^2/\lambda}{n}\right)\right)
+R(\brl) - R(\beta_*) \leq \left(1+ O\left(\frac{1+r^2/\lambda}{n}\right)\right)
 \frac{\lambda\norm{\beta_*}_2^2}{2} + \frac{\sigma^2\tr{\Sigma}}{2n\lambda}
 \]
 
 Optimizing over $\lambda$, and setting $B=\norm{\beta_*}$ gives
 \[
-R(\hat\beta) - R(\beta_*) \leq \sqrt{\frac{\sigma^2r^2B^2}{n}\left(1+O(1/n)\right)} + 
+R(\brl) - R(\beta_*) \leq \sqrt{\frac{\sigma^2r^2B^2}{n}\left(1+O(1/n)\right)} + 
 O\left(\frac{r^2B^2}{n}\right)
 \]
 
@@ -984,7 +984,7 @@ These use different algorithms, but both compute the ~~path~~ for a range of $\l
 - starts with an empty model and adds coefficients until saturated  
 - Uses the entire sequence of $\lambda$ based on the nature of the optimization problem.  
 - Doesn't support other likelihoods  
-- Slower
+- Slower  
 - The path returned by `lars` as more useful than that returned by `glmnet`.
 
 `glmnet`  
