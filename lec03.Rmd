@@ -3,10 +3,10 @@ title: "Lecture 3"
 author: "DJM"
 date: "9 October 2018"
 output:
+  pdf_document: default
   slidy_presentation:
     css: http://mypage.iu.edu/~dajmcdon/teaching/djmRslidy.css
     font_adjustment: 0
-  pdf_document: default
 bibliography: booth-refs.bib
 ---
 
@@ -29,6 +29,7 @@ bibliography: booth-refs.bib
 \newcommand{\X}{\mathbb{X}}
 \newcommand{\Set}[1]{\left\{#1\right\}}
 \newcommand{\dom}[1]{\textrm{dom}\left(#1\right)}
+\newcommand{\st}{\;\;\textrm{ s.t. }\;\;}
 
 
 
@@ -661,10 +662,10 @@ __Example (SVM cont.)__
 
 When are the two following forms equivalent?
 
-constrained form (C): $$\begin{aligned}
+constrained form (C): \[\begin{aligned}
         \min f(x)\\
         s.t. \,\, h(x) \le t
-    \end{aligned}$$
+    \end{aligned}\]
 
 Lagrangian form (L): $$\begin{aligned}
     \min f(x)+\lambda h(x)
@@ -676,8 +677,337 @@ $\lambda$ such that for each $x$ that solves C those $x$ minimize L.
 Now, if $x^*$ solves L, then KKT condition for C hold by taking
 $t=h(x^*)$ and so $x^*$ is a solution of C.
 
+
+
 # Algorithms
 
+## First order methods
 
+For simplicity, consider unconstrained optimization 
+\begin{equation}
+\min_x f(x)
+\end{equation}
+assume $f$ is convex and differentiable
+
+__Gradient descent__
+
+-   Choose $x^{(0)}$
+-   Iterate $x^{(k)} = x^{(k-1)} - t_k\nabla f(x^{(k-1)})$
+-   Stop sometime
+
+__Why?__ 
+
+- Taylor expansion
+\begin{equation}\begin{aligned}
+f(y) \approx f(x) + \nabla f(x)^{\top}(y-x) + \frac{1}{2}(y-x)^\top H (y-x)
+\end{aligned}\end{equation}
+- replace $H$ with $1/t$
+- Choose $y=x^{+}$ to minimize the quadratic approximation 
+
+## What t?
+
+What to use for $t_k$? 
+
+__Fixed__
+
+- Only works if $t$ is exactly right 
+- Usually does not work
+
+__Sequence__ 
+
+\begin{equation}\begin{aligned}
+t_k \quad s.t.\sum_{k=1}^{\infty} t_k = \infty ,\quad
+              \sum_{k=1}^{\infty} t^{2}_k < \infty
+\end{aligned}\end{equation}
+
+__Backtracking line search__
+At each iteration choose best $t$
+
+1. Set $0 <\beta < 1 , 0 < \alpha <\frac{1}{2}$
+2. At each $k$, while
+\begin{equation}f\left(x^{(k)} - t\nabla f(x^{(k)})\right) > f(x^{(k)}) - \alpha t \norm{ f(x^{(k)})}^{2}_{2}\end{equation}
+set $t = \beta t$ (shrink t)
+3. $x^{t+1} = x - t \nabla f(x_t)$ 
+
+
+Exact line search
+
+- Backtracking approximates this
+- At each $k$, solve
+\[
+t = \arg\min_{s >= 0} f( x^{(k)} - s f(x^{(k-1)})) 
+\] 
+- Usually can't solve this.
+
+## Convergence
+
+If $\nabla f$ is Lipschitz, use fixed $t$
+
+1. GD converges at rate $O(1/k)$
+2. $\epsilon$-optimal in $O(1/\epsilon)$ iterations
+
+If $f$ is strongly convex as well
+
+1. GD converges at rate $O(c^k)$ ($0<c<1$).
+2. $\epsilon$-optimal in $O(\log(1/\epsilon))$ iterations
+
+We call this second case "linear convergence" because it's linear on the $\log$ scale.
+
+## Stochastic Gradient Descent
+
+- Workhorse in Neural Networks
+- Suppose $$f(x) = \frac{1}{m} \sum_{i=1}^m f_i(x)$$
+- GD would use 
+$$x^{(k)} = x^{(k-1)} - \frac{t}{m} \sum_{i=1}^m \nabla f_i(x^{(k-1)})$$
+- SGD uses
+$$x^{(k)} = x^{(k-1)} - t \nabla f_{i_k}(x^{(k-1)})$$
+$i_k\in\{1,\ldots,m\}$ is an index chosen at time $k$.
+
+Standard choices for $i_k$
+
+1. Draw $i_k\sim \textrm{Unif}(\{1,\ldots,m\})$.
+2. Set $i_k=1,\ldots,m,1,\ldots,m,1,\ldots,m,\ldots$
+
+Most frequently update "mini-batches". Why?
+
+1. Convergence rates are slower for SGD than GD.
+2. Batches improves this.
+3. SGD is computationally more efficient in per-iteration cost, memory
+4. Efficient when far from the optimum, less good close to the optimum (but statistical properties don't care when you're close)
+
+## Subgradient descent
+
+What happens when $f$ isn't differentiable?
+
+A __subgradient__ of convex $f$ at a point $x$ is any $g$ such that
+$$f(y) \geq f(x) + g^\top (y-x)\quad\quad \forall y$$
+
+- Always exists
+- $f$ differentiable $\Rightarrow g=\nabla f(x)$ (unique)
+- Just plug in the subgradient in GD
+- $f$ Lipschitz gives $O(1/\sqrt{k})$ convergence
+
+## Example (LASSO)
+
+$$\min_{\beta} \frac{1}{2}\norm{y - X\beta}_2^2 + \lambda\norm{\beta}$$
+
+- Subdifferential (the set of subgradients)
+$$\begin{aligned}
+    g(\beta) &= -X^T(y - X\beta) + \lambda\partial\norm{\beta}_1 \\
+    & =-X^\top(y - X\beta) + \lambda v \\
+    v_i &=
+    \begin{cases}
+        \{1\}      & \quad \text{if } \beta_i > 0\\
+        \{1\}      & \quad \text{if } \beta_i < 0\\
+        [-1,1]     & \quad \text{if } \beta_i = 0\\
+    \end{cases}
+\end{aligned}$$
+
+So $sign(\beta) \in \partial\norm{\beta}_1$
+
+- From KKT (stationarity)
+$$\begin{aligned}
+    X^T(y - X\beta) &=\lambda v   \\
+    X_i^{T}(y - X\beta) &= \lambda v_i \\
+    \end{aligned}$$
+- Therefore
+$$\begin{aligned}
+    |X_i^T(y - X\beta)|=\lambda  &\Rightarrow \beta_i \neq 0 \\
+    |X_i^T(y - X\beta)| < \lambda &\Rightarrow \beta_i = 0
+\end{aligned}$$ 
+- Checking the KKT conditions underlies the LARS algorithm
+
+## Proximal gradient descent 
+
+Suppose $f$ is __decomposable__
+$$f(x) = g(x) + h(x)$$
+
+- We assume $g$ is convex and differentiable, but $h$ is convex only
+- Approximate $g$ only (via Taylor with approximate Hessian)
+$$\begin{aligned}
+x^{+} &= \arg\min_z g(x) + \nabla g(x)^\top (z-x) + \frac{1}{2t}\norm{z-x}_2^2 + h(z)\\
+    &= \arg\min_z \frac{1}{2t}\norm{z-(x - t\nabla g(x))}_2^2 + h(z) \\
+\end{aligned}$$
+- The first part keeps us close to the gradient update for $g$, but still minimize over $h$.
+- Define
+$$\textrm{prox}_t(x) := \arg\min_z \frac{1}{2t}\norm{x-z}_2^2 + h(z)$$
+- The prox operator depends only on $h$, not $g$
+- Easily solvable for many $h$
+- Update becomes
+$$x^{(k)} = \textrm{prox}_{t_k}\left(x^{(k-1)} - t_k\nabla g(x^{(k-1)})\right)$$
+
+## Example (LASSO)
+
+$$\min_\beta \underbrace{\frac{1}{2}\norm{y-X\beta}_2^2}_g + \underbrace{\lambda\norm{\beta}_1}_h$$
+
+$$\begin{aligned}
+\textrm{prox}_t(\beta) &= \arg\min_z \norm{z-\beta}_2^2 + \lambda\norm{z}_1\\
+&=: S_{\lambda t}(\beta)\\
+S_{\tau}(\beta) &= \textrm{sign}(\beta)(|\beta|-\tau)_+
+\end{aligned}$$
+
+So the update becomes:
+
+1. $\beta \leftarrow \beta + t X^\top(y-X\beta)$
+2. $\beta \leftarrow S_{\lambda t}(\beta)$
+
+This is called "Iterative soft thresholding" (ISTA)
+
+## Projected gradient descent
+
+$$
+\min_{x\in C} f(x)
+$$
+
+- Incorporate the constraint into the objective using the indicator function:
+$$
+I_C(x) = \begin{cases} 0 & x \in C\\ +\infty & x \not\in C \end{cases}.
+$$
+- Call the indicator $h$, and use proximal GD
+- Now $\textrm{prox}_t(x) = \arg\min_{z\in C} \norm{z-x}_2^2$
+- This is just the Euclidean projection onto $C$
+
+
+So the update becomes:
+
+1. Use GD on $f$
+2. Project onto $C$
+
+# Dual methods
+
+## Dual (sub)gradient ascent/descent
+
+Primal problem:
+$$\min_x f(x) \st Ax=b.$$ 
+
+Dual is
+$$\max_u -f^*(-A^\top u)+b^\top u,$$ 
+where $f^*$ is the __conjugate__ of $f$. 
+
+- Let
+$g(u):=f^*(-A^\top u)-b^\top u$. 
+- Our goal is to minimize $g(u)$. 
+- The subdifferertial is given by
+$$\partial g(u)= A\partial f^*(-A^\top u)-b^\top u,$$ but if
+$x\in\arg\min_z L(z,u)$ then $\partial g(u)={Ax-b}$. 
+
+- We may solve this as
+follows:
+    1. guess initial $u^{(0)}$ 
+    2. choose $x^{(k)}\in\arg\min_x f(x)+(u^{(k-1)})^\top Ax$
+    3. Update $u^{(k)} = u^{(k-1)}+t_k\left(Ax^{(k)}-b\right)$
+
+Formally: if $f$ is strictly convex then
+
+1.  conjugate $f^*$ is differentiable
+2.  procedure is dual gradient ascent
+3.  $x^{(k)}$ is the unique minimizer
+
+We can choose $t_k$ as before and apply proximal methods (or
+acceleration).
+
+## Decomposable dual
+
+ \[ \min_x \sum_{i=1}^m f_i(x_i) \st Ax=b \]
+  standard minimization decomposes into $x^+\in\argmin_x\sum_{i=1}^m f_i(x_i) + u^\top Ax$, which is equivalent to solving separately for each $x_i$:
+  \[ x^+_i\in\arg\min_{x_i} f_i(x_i)+u^\top A_i x_i. \]
+So we can iterate:
+$$
+\begin{aligned}
+x_i^{(k)}&\in\arg\min_{x_i}f(x_i)+(u^{(k-1)})^TA_ix_i\\ 
+u^{(k)} &= u^{(k-1)}+t_k\left(\sum_{i=1}^m A_ i x_i^{(k)}-b \right)
+\end{aligned}
+$$
+
+- Strong duality holds in this particular example since we have no inequality constraints.
+- If the constraints are inequalities, i.e. $Ax\leq b$, we make a slight modification to $u^{(k)}$:
+\[
+u^{(k)} = \left(u^{(k-1)}+t_k\left(\sum_{i=1}^m A_i x_i^{(k)}-b \right)\right)_+
+\]
+- Updates can be parallelized.
+
+## Augmented Lagrangian
+
+- For for dual ascent to work ($\to g^*$), we need $f$ "nice" 
+- To achieve strong duality (primal optimality) the program must also satisfy one of the conditions mentioned earlier (e.g. Slater's condition).
+
+
+We can alter the problem to enforce strong convexity
+
+- Use $\min_xf(x)+\frac{\rho}{2}||Ax-b||_2^2 \st Ax=b$.  
+- The objective is strongly convex if $A$ has full column rank.  
+- Dual gradient ascent then becomes
+    $$\begin{aligned}
+      x^{(k)}&=\arg\min_x f(x)+(u^{(k-1)})^\top Ax+\frac{\rho}{2}\norm{Ax-b}_2^2\\ 
+    u^{(k)} &= u^{(k-1)}+\rho(Ax^{(k-1)}-b) 
+    \end{aligned}$$
+- Replacing the step size $t_k$ with $\rho$ gives better convergence properties than the original DGA.  
+- But introducing the norm kills decomposability (if we had it), no parallelization
+- $\rho$ balances primal feasibility with a small objective 
+- larger $\rho$ deemphasizes objective but forces $x^{(k)}$ toward primal feasiblity
+
+## Alternating Direction Method of Multipliers (ADMM)
+
+\[\min_{x,z}f(x)+g(z) \st Ax+Bz=c\]
+Add $\frac{\rho}{2}\norm{Ax+Bz-c}_2^2$ to the objective, penalizing infeasibility:
+\[
+L_\rho(x,z,u)=f(x)+g(z)+u^T(Ax+Bz-c) + \frac{\rho}{2}\norm{Ax+Bz-c}_2^2
+\]
+
+Iteratively update:
+$$\begin{aligned}
+  x^{(k)}&=\arg\min_xL_\rho(x,z^{(k-1)},u^{(k-1)})\\
+z^{(k)}&=\arg\min_zL_\rho(x^{(k-1)},z,u^{(k-1)})\\
+u^{(k)} &= u^{(k-1)}+\rho(Ax^{(k-1)}+Bx^{(k-1)}-b)\\
+\end{aligned}$$
+
+
+Properties of ADMM (some of which do not require $A$ and $B$ to be full
+rank):
+
+1.  $Ax^{(k)}+Bz^{(k)}-c\to 0$ as $k\to\infty$ (primal feasibility)
+2.  $f^{(k)}+g^{(k)}\to f^*+g^*$ (primal optimality)
+3.  $u^{(k)}\to u^*$ (dual solution)
+4.  doesn't necessarily give $x^{(k)}\to x^*$ and $z^{(k)}\to z^*$
+
+The exact convergence rate is unknown, but empirically seems close to
+$O(1/\epsilon)$.
+
+## Example (LASSO)
+
+$$\min_\beta \frac{1}{2}\norm{y-X\beta}_2^2 +\lambda\norm{\alpha}_1 \st \alpha=\beta$$
+ADMM update (compare with ridge regression): $$\begin{aligned}
+  \beta^{(k)}&=\left(X^TX+\rho I\right)^{-1}\left(X^Ty+\rho(\alpha^{(k-1)}-w^{(k-1)})\right)\\ 
+  \alpha^{(k)}&=S_{\lambda/\rho}(\beta^{(k)}+w^{(k-1)})\\
+  w^{(k)}&=w^{(k-1)}+\beta^{(k)}-\alpha^{(k)}\\\end{aligned}$$
+
+Issues with ADMM:
+
+-   How to choose $\rho$.
+-   Different ADMM formulations of the problem may have different
+    convergence properties.
+    
+## Coordinate descent
+
+- Works well with LASSO.
+- If $f(x)=g(x)+\sum_{i=1}^nh_i(x_i)$ where $g$ is convex and differentiable, $h$ merely convex
+- Then:
+1. Guess $x^{(0)}$.  
+2. Update according to:
+$$\begin{aligned}
+x_1^{(k)}&\in \arg\min_{x_1} f(x_1,x_2^{(k-1)},...,x_n^{(k-1)})\\
+x_2^{(k)}&\in \arg\min_{x_2} f(x_1^{(k)},x_2,...,x_n^{(k-1)})\; \text{ (minimize over whole vector or block)}\\
+&\quad \vdots
+\end{aligned}$$
+
+## Example (LASSO)
+
+This is what `GLMNET` does
+$$\min_\beta \frac{1}{2}\norm{y-X\beta}_2^2 +\lambda\norm{\beta}_1 $$
+
+- $\norm{\beta}_1 = \sum_{i=1}^p |\beta_i|$
+- Iterate over $p$ 
+$$\beta_i\leftarrow S_{\lambda/\norm{X_i}_2^2}\left(\frac{X_i^T(y-X_{-i}\beta_{-i})}{X_i^\top X_i}\right)$$
+- Comes from taking derivative of objective wrt $\beta_i$
 
 ## References

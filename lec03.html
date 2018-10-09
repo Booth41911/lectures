@@ -868,7 +868,283 @@ f^* = g^*
 <p>When C is strictly feasible, strong duality holds. So there exists <span class="math inline">\(\lambda\)</span> such that for each <span class="math inline">\(x\)</span> that solves C those <span class="math inline">\(x\)</span> minimize L.</p>
 <p>Now, if <span class="math inline">\(x^*\)</span> solves L, then KKT condition for C hold by taking <span class="math inline">\(t=h(x^*)\)</span> and so <span class="math inline">\(x^*\)</span> is a solution of C.</p>
 </div>
-<div id="algorithms" class="title-slide slide section level1"><h1>Algorithms</h1></div><div id="references" class="slide section level2 unnumbered">
+<div id="algorithms" class="title-slide slide section level1"><h1>Algorithms</h1></div><div id="first-order-methods" class="slide section level2">
+<h1>First order methods</h1>
+<p>For simplicity, consider unconstrained optimization <span class="math display">\[\begin{equation}
+\min_x f(x)
+\end{equation}\]</span> assume <span class="math inline">\(f\)</span> is convex and differentiable</p>
+<p><strong>Gradient descent</strong></p>
+<ul>
+<li>Choose <span class="math inline">\(x^{(0)}\)</span></li>
+<li>Iterate <span class="math inline">\(x^{(k)} = x^{(k-1)} - t_k\nabla f(x^{(k-1)})\)</span></li>
+<li>Stop sometime</li>
+</ul>
+<p><strong>Why?</strong></p>
+<ul>
+<li>Taylor expansion <span class="math display">\[\begin{equation}\begin{aligned}
+f(y) \approx f(x) + \nabla f(x)^{\top}(y-x) + \frac{1}{2}(y-x)^\top H (y-x)
+\end{aligned}\end{equation}\]</span></li>
+<li>replace <span class="math inline">\(H\)</span> with <span class="math inline">\(1/t\)</span></li>
+<li>Choose <span class="math inline">\(y=x^{+}\)</span> to minimize the quadratic approximation</li>
+</ul>
+</div><div id="what-t" class="slide section level2">
+<h1>What t?</h1>
+<p>What to use for <span class="math inline">\(t_k\)</span>?</p>
+<p><strong>Fixed</strong></p>
+<ul>
+<li>Only works if <span class="math inline">\(t\)</span> is exactly right</li>
+<li>Usually does not work</li>
+</ul>
+<p><strong>Sequence</strong></p>
+<p><span class="math display">\[\begin{equation}\begin{aligned}
+t_k \quad s.t.\sum_{k=1}^{\infty} t_k = \infty ,\quad
+              \sum_{k=1}^{\infty} t^{2}_k &lt; \infty
+\end{aligned}\end{equation}\]</span></p>
+<p><strong>Backtracking line search</strong> At each iteration choose best <span class="math inline">\(t\)</span></p>
+<ol style="list-style-type: decimal">
+<li>Set <span class="math inline">\(0 &lt;\beta &lt; 1 , 0 &lt; \alpha &lt;\frac{1}{2}\)</span></li>
+<li>At each <span class="math inline">\(k\)</span>, while <span class="math display">\[\begin{equation}f\left(x^{(k)} - t\nabla f(x^{(k)})\right) &gt; f(x^{(k)}) - \alpha t \left\lVert  f(x^{(k)}) \right\rVert^{2}_{2}\end{equation}\]</span> set <span class="math inline">\(t = \beta t\)</span> (shrink t)</li>
+<li><span class="math inline">\(x^{t+1} = x - t \nabla f(x_t)\)</span></li>
+</ol>
+<p>Exact line search</p>
+<ul>
+<li>Backtracking approximates this</li>
+<li>At each <span class="math inline">\(k\)</span>, solve <span class="math display">\[
+t = \arg\min_{s &gt;= 0} f( x^{(k)} - s f(x^{(k-1)})) 
+\]</span></li>
+<li>Usually can’t solve this.</li>
+</ul>
+</div><div id="convergence" class="slide section level2">
+<h1>Convergence</h1>
+<p>If <span class="math inline">\(\nabla f\)</span> is Lipschitz, use fixed <span class="math inline">\(t\)</span></p>
+<ol style="list-style-type: decimal">
+<li>GD converges at rate <span class="math inline">\(O(1/k)\)</span></li>
+<li><span class="math inline">\(\epsilon\)</span>-optimal in <span class="math inline">\(O(1/\epsilon)\)</span> iterations</li>
+</ol>
+<p>If <span class="math inline">\(f\)</span> is strongly convex as well</p>
+<ol style="list-style-type: decimal">
+<li>GD converges at rate <span class="math inline">\(O(c^k)\)</span> (<span class="math inline">\(0&lt;c&lt;1\)</span>).</li>
+<li><span class="math inline">\(\epsilon\)</span>-optimal in <span class="math inline">\(O(\log(1/\epsilon))\)</span> iterations</li>
+</ol>
+<p>We call this second case “linear convergence” because it’s linear on the <span class="math inline">\(\log\)</span> scale.</p>
+</div><div id="stochastic-gradient-descent" class="slide section level2">
+<h1>Stochastic Gradient Descent</h1>
+<ul>
+<li>Workhorse in Neural Networks</li>
+<li>Suppose <span class="math display">\[f(x) = \frac{1}{m} \sum_{i=1}^m f_i(x)\]</span></li>
+<li>GD would use <span class="math display">\[x^{(k)} = x^{(k-1)} - \frac{t}{m} \sum_{i=1}^m \nabla f_i(x^{(k-1)})\]</span></li>
+<li>SGD uses <span class="math display">\[x^{(k)} = x^{(k-1)} - t \nabla f_{i_k}(x^{(k-1)})\]</span> <span class="math inline">\(i_k\in\{1,\ldots,m\}\)</span> is an index chosen at time <span class="math inline">\(k\)</span>.</li>
+</ul>
+<p>Standard choices for <span class="math inline">\(i_k\)</span></p>
+<ol style="list-style-type: decimal">
+<li>Draw <span class="math inline">\(i_k\sim \textrm{Unif}(\{1,\ldots,m\})\)</span>.</li>
+<li>Set <span class="math inline">\(i_k=1,\ldots,m,1,\ldots,m,1,\ldots,m,\ldots\)</span></li>
+</ol>
+<p>Most frequently update “mini-batches”. Why?</p>
+<ol style="list-style-type: decimal">
+<li>Convergence rates are slower for SGD than GD.</li>
+<li>Batches improves this.</li>
+<li>SGD is computationally more efficient in per-iteration cost, memory</li>
+<li>Efficient when far from the optimum, less good close to the optimum (but statistical properties don’t care when you’re close)</li>
+</ol>
+</div><div id="subgradient-descent" class="slide section level2">
+<h1>Subgradient descent</h1>
+<p>What happens when <span class="math inline">\(f\)</span> isn’t differentiable?</p>
+<p>A <strong>subgradient</strong> of convex <span class="math inline">\(f\)</span> at a point <span class="math inline">\(x\)</span> is any <span class="math inline">\(g\)</span> such that <span class="math display">\[f(y) \geq f(x) + g^\top (y-x)\quad\quad \forall y\]</span></p>
+<ul>
+<li>Always exists</li>
+<li><span class="math inline">\(f\)</span> differentiable <span class="math inline">\(\Rightarrow g=\nabla f(x)\)</span> (unique)</li>
+<li>Just plug in the subgradient in GD</li>
+<li><span class="math inline">\(f\)</span> Lipschitz gives <span class="math inline">\(O(1/\sqrt{k})\)</span> convergence</li>
+</ul>
+</div><div id="example-lasso" class="slide section level2">
+<h1>Example (LASSO)</h1>
+<p><span class="math display">\[\min_{\beta} \frac{1}{2}\left\lVert y - X\beta \right\rVert_2^2 + \lambda\left\lVert \beta \right\rVert\]</span></p>
+<ul>
+<li>Subdifferential (the set of subgradients) <span class="math display">\[\begin{aligned}
+  g(\beta) &amp;= -X^T(y - X\beta) + \lambda\partial\left\lVert \beta \right\rVert_1 \\
+  &amp; =-X^\top(y - X\beta) + \lambda v \\
+  v_i &amp;=
+  \begin{cases}
+      \{1\}      &amp; \quad \text{if } \beta_i &gt; 0\\
+      \{1\}      &amp; \quad \text{if } \beta_i &lt; 0\\
+      [-1,1]     &amp; \quad \text{if } \beta_i = 0\\
+  \end{cases}
+\end{aligned}\]</span></li>
+</ul>
+<p>So <span class="math inline">\(sign(\beta) \in \partial\left\lVert \beta \right\rVert_1\)</span></p>
+<ul>
+<li>From KKT (stationarity) <span class="math display">\[\begin{aligned}
+  X^T(y - X\beta) &amp;=\lambda v   \\
+  X_i^{T}(y - X\beta) &amp;= \lambda v_i \\
+  \end{aligned}\]</span></li>
+<li>Therefore <span class="math display">\[\begin{aligned}
+  |X_i^T(y - X\beta)|=\lambda  &amp;\Rightarrow \beta_i \neq 0 \\
+  |X_i^T(y - X\beta)| &lt; \lambda &amp;\Rightarrow \beta_i = 0
+\end{aligned}\]</span></li>
+<li>Checking the KKT conditions underlies the LARS algorithm</li>
+</ul>
+</div><div id="proximal-gradient-descent" class="slide section level2">
+<h1>Proximal gradient descent</h1>
+<p>Suppose <span class="math inline">\(f\)</span> is <strong>decomposable</strong> <span class="math display">\[f(x) = g(x) + h(x)\]</span></p>
+<ul>
+<li>We assume <span class="math inline">\(g\)</span> is convex and differentiable, but <span class="math inline">\(h\)</span> is convex only</li>
+<li>Approximate <span class="math inline">\(g\)</span> only (via Taylor with approximate Hessian) <span class="math display">\[\begin{aligned}
+x^{+} &amp;= \arg\min_z g(x) + \nabla g(x)^\top (z-x) + \frac{1}{2t}\left\lVert z-x \right\rVert_2^2 + h(z)\\
+  &amp;= \arg\min_z \frac{1}{2t}\left\lVert z-(x - t\nabla g(x)) \right\rVert_2^2 + h(z) \\
+\end{aligned}\]</span></li>
+<li>The first part keeps us close to the gradient update for <span class="math inline">\(g\)</span>, but still minimize over <span class="math inline">\(h\)</span>.</li>
+<li>Define <span class="math display">\[\textrm{prox}_t(x) := \arg\min_z \frac{1}{2t}\left\lVert x-z \right\rVert_2^2 + h(z)\]</span></li>
+<li>The prox operator depends only on <span class="math inline">\(h\)</span>, not <span class="math inline">\(g\)</span></li>
+<li>Easily solvable for many <span class="math inline">\(h\)</span></li>
+<li>Update becomes <span class="math display">\[x^{(k)} = \textrm{prox}_{t_k}\left(x^{(k-1)} - t_k\nabla g(x^{(k-1)})\right)\]</span></li>
+</ul>
+</div><div id="example-lasso-1" class="slide section level2">
+<h1>Example (LASSO)</h1>
+<p><span class="math display">\[\min_\beta \underbrace{\frac{1}{2}\left\lVert y-X\beta \right\rVert_2^2}_g + \underbrace{\lambda\left\lVert \beta \right\rVert_1}_h\]</span></p>
+<p><span class="math display">\[\begin{aligned}
+\textrm{prox}_t(\beta) &amp;= \arg\min_z \left\lVert z-\beta \right\rVert_2^2 + \lambda\left\lVert z \right\rVert_1\\
+&amp;=: S_{\lambda t}(\beta)\\
+S_{\tau}(\beta) &amp;= \textrm{sign}(\beta)(|\beta|-\tau)_+
+\end{aligned}\]</span></p>
+<p>So the update becomes:</p>
+<ol style="list-style-type: decimal">
+<li><span class="math inline">\(\beta \leftarrow \beta + t X^\top(y-X\beta)\)</span></li>
+<li><span class="math inline">\(\beta \leftarrow S_{\lambda t}(\beta)\)</span></li>
+</ol>
+<p>This is called “Iterative soft thresholding” (ISTA)</p>
+</div><div id="projected-gradient-descent" class="slide section level2">
+<h1>Projected gradient descent</h1>
+<p><span class="math display">\[
+\min_{x\in C} f(x)
+\]</span></p>
+<ul>
+<li>Incorporate the constraint into the objective using the indicator function: <span class="math display">\[
+I_C(x) = \begin{cases} 0 &amp; x \in C\\ +\infty &amp; x \not\in C \end{cases}.
+\]</span></li>
+<li>Call the indicator <span class="math inline">\(h\)</span>, and use proximal GD</li>
+<li>Now <span class="math inline">\(\textrm{prox}_t(x) = \arg\min_{z\in C} \left\lVert z-x \right\rVert_2^2\)</span></li>
+<li>This is just the Euclidean projection onto <span class="math inline">\(C\)</span></li>
+</ul>
+<p>So the update becomes:</p>
+<ol style="list-style-type: decimal">
+<li>Use GD on <span class="math inline">\(f\)</span></li>
+<li>Project onto <span class="math inline">\(C\)</span></li>
+</ol>
+</div>
+<div id="dual-methods" class="title-slide slide section level1"><h1>Dual methods</h1></div><div id="dual-subgradient-ascentdescent" class="slide section level2">
+<h1>Dual (sub)gradient ascent/descent</h1>
+<p>Primal problem: <span class="math display">\[\min_x f(x) \;\;\textrm{ s.t. }\;\;Ax=b.\]</span></p>
+<p>Dual is <span class="math display">\[\max_u -f^*(-A^\top u)+b^\top u,\]</span> where <span class="math inline">\(f^*\)</span> is the <strong>conjugate</strong> of <span class="math inline">\(f\)</span>.</p>
+<ul>
+<li>Let <span class="math inline">\(g(u):=f^*(-A^\top u)-b^\top u\)</span>.</li>
+<li>Our goal is to minimize <span class="math inline">\(g(u)\)</span>.</li>
+<li><p>The subdifferertial is given by <span class="math display">\[\partial g(u)= A\partial f^*(-A^\top u)-b^\top u,\]</span> but if <span class="math inline">\(x\in\arg\min_z L(z,u)\)</span> then <span class="math inline">\(\partial g(u)={Ax-b}\)</span>.</p></li>
+<li>We may solve this as follows:
+<ol style="list-style-type: decimal">
+<li>guess initial <span class="math inline">\(u^{(0)}\)</span></li>
+<li>choose <span class="math inline">\(x^{(k)}\in\arg\min_x f(x)+(u^{(k-1)})^\top Ax\)</span></li>
+<li>Update <span class="math inline">\(u^{(k)} = u^{(k-1)}+t_k\left(Ax^{(k)}-b\right)\)</span></li>
+</ol></li>
+</ul>
+<p>Formally: if <span class="math inline">\(f\)</span> is strictly convex then</p>
+<ol style="list-style-type: decimal">
+<li>conjugate <span class="math inline">\(f^*\)</span> is differentiable</li>
+<li>procedure is dual gradient ascent</li>
+<li><span class="math inline">\(x^{(k)}\)</span> is the unique minimizer</li>
+</ol>
+<p>We can choose <span class="math inline">\(t_k\)</span> as before and apply proximal methods (or acceleration).</p>
+</div><div id="decomposable-dual" class="slide section level2">
+<h1>Decomposable dual</h1>
+<p><span class="math display">\[ \min_x \sum_{i=1}^m f_i(x_i) \;\;\textrm{ s.t. }\;\;Ax=b \]</span> standard minimization decomposes into <span class="math inline">\(x^+\)</span>, which is equivalent to solving separately for each <span class="math inline">\(x_i\)</span>: <span class="math display">\[ x^+_i\in\arg\min_{x_i} f_i(x_i)+u^\top A_i x_i. \]</span> So we can iterate: <span class="math display">\[
+\begin{aligned}
+x_i^{(k)}&amp;\in\arg\min_{x_i}f(x_i)+(u^{(k-1)})^TA_ix_i\\ 
+u^{(k)} &amp;= u^{(k-1)}+t_k\left(\sum_{i=1}^m A_ i x_i^{(k)}-b \right)
+\end{aligned}
+\]</span></p>
+<ul>
+<li>Strong duality holds in this particular example since we have no inequality constraints.</li>
+<li>If the constraints are inequalities, i.e. <span class="math inline">\(Ax\leq b\)</span>, we make a slight modification to <span class="math inline">\(u^{(k)}\)</span>: <span class="math display">\[
+u^{(k)} = \left(u^{(k-1)}+t_k\left(\sum_{i=1}^m A_i x_i^{(k)}-b \right)\right)_+
+\]</span></li>
+<li>Updates can be parallelized.</li>
+</ul>
+</div><div id="augmented-lagrangian" class="slide section level2">
+<h1>Augmented Lagrangian</h1>
+<ul>
+<li>For for dual ascent to work (<span class="math inline">\(\to g^*\)</span>), we need <span class="math inline">\(f\)</span> “nice”</li>
+<li>To achieve strong duality (primal optimality) the program must also satisfy one of the conditions mentioned earlier (e.g. Slater’s condition).</li>
+</ul>
+<p>We can alter the problem to enforce strong convexity</p>
+<ul>
+<li>Use <span class="math inline">\(\min_xf(x)+\frac{\rho}{2}||Ax-b||_2^2 \;\;\textrm{ s.t. }\;\;Ax=b\)</span>.<br />
+</li>
+<li>The objective is strongly convex if <span class="math inline">\(A\)</span> has full column rank.<br />
+</li>
+<li>Dual gradient ascent then becomes <span class="math display">\[\begin{aligned}
+    x^{(k)}&amp;=\arg\min_x f(x)+(u^{(k-1)})^\top Ax+\frac{\rho}{2}\left\lVert Ax-b \right\rVert_2^2\\ 
+  u^{(k)} &amp;= u^{(k-1)}+\rho(Ax^{(k-1)}-b) 
+  \end{aligned}\]</span></li>
+<li>Replacing the step size <span class="math inline">\(t_k\)</span> with <span class="math inline">\(\rho\)</span> gives better convergence properties than the original DGA.<br />
+</li>
+<li>But introducing the norm kills decomposability (if we had it), no parallelization</li>
+<li><span class="math inline">\(\rho\)</span> balances primal feasibility with a small objective</li>
+<li>larger <span class="math inline">\(\rho\)</span> deemphasizes objective but forces <span class="math inline">\(x^{(k)}\)</span> toward primal feasiblity</li>
+</ul>
+</div><div id="alternating-direction-method-of-multipliers-admm" class="slide section level2">
+<h1>Alternating Direction Method of Multipliers (ADMM)</h1>
+<p><span class="math display">\[\min_{x,z}f(x)+g(z) \;\;\textrm{ s.t. }\;\;Ax+Bz=c\]</span> Add <span class="math inline">\(\frac{\rho}{2}\left\lVert Ax+Bz-c \right\rVert_2^2\)</span> to the objective, penalizing infeasibility: <span class="math display">\[
+L_\rho(x,z,u)=f(x)+g(z)+u^T(Ax+Bz-c) + \frac{\rho}{2}\left\lVert Ax+Bz-c \right\rVert_2^2
+\]</span></p>
+<p>Iteratively update: <span class="math display">\[\begin{aligned}
+  x^{(k)}&amp;=\arg\min_xL_\rho(x,z^{(k-1)},u^{(k-1)})\\
+z^{(k)}&amp;=\arg\min_zL_\rho(x^{(k-1)},z,u^{(k-1)})\\
+u^{(k)} &amp;= u^{(k-1)}+\rho(Ax^{(k-1)}+Bx^{(k-1)}-b)\\
+\end{aligned}\]</span></p>
+<p>Properties of ADMM (some of which do not require <span class="math inline">\(A\)</span> and <span class="math inline">\(B\)</span> to be full rank):</p>
+<ol style="list-style-type: decimal">
+<li><span class="math inline">\(Ax^{(k)}+Bz^{(k)}-c\to 0\)</span> as <span class="math inline">\(k\to\infty\)</span> (primal feasibility)</li>
+<li><span class="math inline">\(f^{(k)}+g^{(k)}\to f^*+g^*\)</span> (primal optimality)</li>
+<li><span class="math inline">\(u^{(k)}\to u^*\)</span> (dual solution)</li>
+<li>doesn’t necessarily give <span class="math inline">\(x^{(k)}\to x^*\)</span> and <span class="math inline">\(z^{(k)}\to z^*\)</span></li>
+</ol>
+<p>The exact convergence rate is unknown, but empirically seems close to <span class="math inline">\(O(1/\epsilon)\)</span>.</p>
+</div><div id="example-lasso-2" class="slide section level2">
+<h1>Example (LASSO)</h1>
+<p><span class="math display">\[\min_\beta \frac{1}{2}\left\lVert y-X\beta \right\rVert_2^2 +\lambda\left\lVert \alpha \right\rVert_1 \;\;\textrm{ s.t. }\;\;\alpha=\beta\]</span> ADMM update (compare with ridge regression): <span class="math display">\[\begin{aligned}
+  \beta^{(k)}&amp;=\left(X^TX+\rho I\right)^{-1}\left(X^Ty+\rho(\alpha^{(k-1)}-w^{(k-1)})\right)\\ 
+  \alpha^{(k)}&amp;=S_{\lambda/\rho}(\beta^{(k)}+w^{(k-1)})\\
+  w^{(k)}&amp;=w^{(k-1)}+\beta^{(k)}-\alpha^{(k)}\\\end{aligned}\]</span></p>
+<p>Issues with ADMM:</p>
+<ul>
+<li>How to choose <span class="math inline">\(\rho\)</span>.</li>
+<li>Different ADMM formulations of the problem may have different convergence properties.</li>
+</ul>
+</div><div id="coordinate-descent" class="slide section level2">
+<h1>Coordinate descent</h1>
+<ul>
+<li>Works well with LASSO.</li>
+<li>If <span class="math inline">\(f(x)=g(x)+\sum_{i=1}^nh_i(x_i)\)</span> where <span class="math inline">\(g\)</span> is convex and differentiable, <span class="math inline">\(h\)</span> merely convex</li>
+<li>Then:</li>
+</ul>
+<ol style="list-style-type: decimal">
+<li>Guess <span class="math inline">\(x^{(0)}\)</span>.<br />
+</li>
+<li>Update according to: <span class="math display">\[\begin{aligned}
+x_1^{(k)}&amp;\in \arg\min_{x_1} f(x_1,x_2^{(k-1)},...,x_n^{(k-1)})\\
+x_2^{(k)}&amp;\in \arg\min_{x_2} f(x_1^{(k)},x_2,...,x_n^{(k-1)})\; \text{ (minimize over whole vector or block)}\\
+&amp;\quad \vdots
+\end{aligned}\]</span></li>
+</ol>
+</div><div id="example-lasso-3" class="slide section level2">
+<h1>Example (LASSO)</h1>
+<p>This is what <code>GLMNET</code> does <span class="math display">\[\min_\beta \frac{1}{2}\left\lVert y-X\beta \right\rVert_2^2 +\lambda\left\lVert \beta \right\rVert_1 \]</span></p>
+<ul>
+<li><span class="math inline">\(\left\lVert \beta \right\rVert_1 = \sum_{i=1}^p |\beta_i|\)</span></li>
+<li>Iterate over <span class="math inline">\(p\)</span> <span class="math display">\[\beta_i\leftarrow S_{\lambda/\left\lVert X_i \right\rVert_2^2}\left(\frac{X_i^T(y-X_{-i}\beta_{-i})}{X_i^\top X_i}\right)\]</span></li>
+<li>Comes from taking derivative of objective wrt <span class="math inline">\(\beta_i\)</span></li>
+</ul>
+</div><div id="references" class="slide section level2 unnumbered">
 <h1>References</h1>
 <div id="refs" class="references">
 <div id="ref-BoydVandenberghe2004">
