@@ -1,0 +1,683 @@
+---
+title: "Lecture 3"
+author: "DJM"
+date: "9 October 2018"
+output:
+  slidy_presentation:
+    css: http://mypage.iu.edu/~dajmcdon/teaching/djmRslidy.css
+    font_adjustment: 0
+  pdf_document: default
+bibliography: booth-refs.bib
+---
+
+\newcommand{\cdist}{\rightsquigarrow}
+\newcommand{\cprob}{\xrightarrow{P}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Expect}[1]{\mathbb{E}\left[ #1 \right]}
+\newcommand{\Var}[1]{\mathbb{V}\left[ #1 \right]}
+\newcommand{\Cov}[2]{\mathrm{Cov}\left[#1,\ #2\right]}
+\newcommand{\given}{\ \vert\ }
+\renewcommand{\P}{\mathbb{P}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\argmin}[1]{\underset{#1}{\textrm{argmin}}}
+\newcommand{\F}{\mathcal{F}}
+\newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
+\newcommand{\indicator}{\mathbb{1}}
+\renewcommand{\bar}{\overline}
+\renewcommand{\hat}{\widehat}
+\newcommand{\tr}[1]{\mbox{tr}(#1)}
+\newcommand{\X}{\mathbb{X}}
+\newcommand{\Set}[1]{\left\{#1\right\}}
+\newcommand{\dom}[1]{\textrm{dom}\left(#1\right)}
+
+
+
+# Convex sets and functions
+
+## Definitions
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(cache=TRUE, autodep=TRUE, message=FALSE, warning = FALSE,
+                      fig.align='center')
+library(tidyverse)
+theme_set(theme_minimal(base_family="Times"))
+green = '#00AF64'
+blue = '#0B61A4'
+red = '#FF4900'
+orange = '#FF9200'
+colvec = c(green,blue,red,orange)
+```
+
+Thanks: Much of this material is borrowed/copied from Ryan Tibshirani. 
+
+Set $C$ is *convex* iff
+$\forall x,c \in C, \forall t \in [0; 1]\ \ t x + (1-t) y \in C.$
+
+So $C$ is convex iff for any two points in $C$ their segment is also
+entirely in $C$.
+
+*Convex combination* of set of points
+$x_1, \ldots, x_k \in \mathbb{R}^n$ is
+$$\Set{\sum\limits_{i=1}^{k} \Theta_i x_i : \sum\limits_{i=1}^{k} \Theta_i=1,\ \forall i\ \Theta_i \in [0; 1]}.$$
+
+*Convex hull* of any $C \in \mathbb{R}^n$, denoted $conv(C)$ is a union
+of all convex combinations of different elements of $C$.
+
+## Some examples
+
+-   Empty set, point, line, segment.
+
+-   Norm ball: $\Set{x : \left\lVert x \right\rVert < r}$.
+
+-   Hyperplane $\Set{x : {a}^\top x = b}$, Affine space
+    $\Set{x : A x = b}$.
+
+-   Hyperspace: $\Set{x : {a}^\top x \leq b}$, Polyhedron
+    $\Set{x : A x \leq b}$.
+
+-   Cone such that if $x_1, x_2 \in C$ then
+    $t_1 x_1 + t_2 x_2 \in C \ \forall t_1, t_2 \geq 0$.
+    
+## Cones
+
+Set $C$ is a *cone* iff
+$\forall t \geq 0,\ x \in C \implies t^\top x \in C$.
+
+Type of cones:
+
+-   Norm cone: $\Set{(x,t) : \left\lVert x \right\rVert \leq t}$.
+
+-   Normal cone for some $C$ and $x \in C$:
+    $N_C(x) = \Set{g : {g}^\top x \geq {g}^\top y \ \forall y \in C}$.
+
+-   Positive semidefinite cone $S_+^n = \Set{x \in S^n : x \succeq 0}$,
+    $S^n$ is Hilbert space.
+    
+## Key properties of convex sets
+
+-   Separating hyperplane. $A, B$ are convex, nonempty, disjoint. Then
+    $\exists a,b:\ A \subseteq \Set{x : {a}^\top x \leq b}, B \subseteq \Set{x : {a}^\top \geq b}$.
+
+-   Supporting hyperplane. $C$ nonempty, convex, $x_0 \in boundary(C)$.
+    Then
+    $\exists a:\ C \subseteq \Set{x : {a}^\top x \leq {a}^\top x_0}$.
+
+## Operations preserving convexity
+
+-   Intersection.
+
+-   Scaling, translation. $C$ is convex $\implies a C + b$ is convex.
+
+-   Affine image and preimage. $f(x) = A x + b$, $C$ is convex
+    $\implies f(C), f^{-1}(C)$ are convex.
+
+-   Lots more (See [@BoydVandenberghe2004], chapter $2$).
+
+$A_1, \ldots, A_k, B \in \mathbb{S}^n$ -- symmetric matrices. Then
+$C = \Set{x \in \mathbb{R}^k : \sum\limits_{i=1}^{k} x_i A_i \preceq B}$.
+
+$f: \mathbb{R}^k \to \mathbb{S}^n$,
+$f(x) = B - \sum\limits_{i=1}^{k} x_i A_i$. $C = f^{-1}(S_+^n)$ --
+affine preimage of convex cone.
+
+
+## Convex functions
+
+Function $f: \mathbb{R}^n\to \mathbb{R}$ is *convex* iff
+$\dom{f} \subseteq \mathbb{R}^n$ is convex and
+$$\forall x,y \in \dom{f}, t \in [0;1] \ \ \ f(t x + (1-t) y) \leq t f(x) + (1-t) f(y)$$
+
+Other definitions:
+
+-   $f$ is *concave* iff $-f$ is convex.
+
+-   $f$ is *strictly convex* iff $\forall t \in (0; 1)$ the inequality
+    in definition is strict.
+
+-   $f$ is *strongly convex* with parameter $\tau$ iff
+    $f(x) - \frac \tau 2 \left\lVert x \right\rVert_2^2$ is convex.
+
+## Examples
+
+-   $f(x) = \frac 1 x$ is strictly convex, but not strongly.
+
+-   Univariate functions:
+
+    -   $e^{ax}$ is convex $\forall a \in \mathbb{R}$ over $\mathbb{R}$.
+
+    -   $x^a$ convex given $a \geq 1$ or $a \leq 0$ over $\mathbb{R}_+$.
+
+    -   $\log x$ is concave over $\mathbb{R}_+$.
+
+-   Affine ${a}^\top x + b$ is both convex and concave.
+
+-   Quadratic $\frac 1 2 {x}^\top Q x + {b}^\top x + c$ is
+    convex if $Q \succeq 0$.
+
+-   $\left\lVert u - A x \right\rVert_2^2$ convex since
+    ${A}^\top A \succeq 0$.
+
+-   Norms: all vector norms and most matrix norms are convex.
+
+-   Indicator function is convex. $C$ is a convex set, then
+    $I_C(x) = \begin{cases}
+                    0,\ x \in C \\
+                    \infty, otherwise
+                  \end{cases}$.
+
+-   Support function is convex $\forall C$.
+    $I_C^*(x) = \max\limits_{y \in C} {x}^\top y$.
+
+## Key properties
+
+-   $f$ is convex iff its epigraph is convex, where
+    $epi(f) = \Set{ (x,t) \in \dom{f} \times \R : f(x) \leq t}$.
+
+-   $f$ is convex $\implies$ all its sublevel sets are convex.
+    $C_t = \Set{x \in \dom{f} : f(x) \leq t}$. The converse is false.
+
+-   Assume $f$ is differentiable. Then $f$ is convex iff $\dom f$ is
+    convex and
+    $\forall x,y \in \dom{f}\ \ f(y) \geq f(x) + \nabla {f(x)}^\top (y-x)$.
+    Essentially, it means that $f$'s graph is above any tangent plain.
+
+-   Assume $f$ is twice differentiable. $f$ is convex iff $\dom{f}$ is
+    convex and $\forall x \in \dom{f}\ \ \nabla^2 f(x) \succeq 0$.
+    
+## Operations preserving function convexity
+
+-   Nonnegative linear combination.
+
+-   Pointwise maximum. $\forall s \in S\ \ f_s$ is convex
+    $\implies f(x) = \max\limits_S f_s(x)$ is also convex.
+
+-   Partial minimum. $g(x,y)$ convex over variables $x, y$; $C$ convex.
+    Then $f(x) = \min\limits_{y \in C} g(x,y)$ is also convex. E.g.,
+    $f(x) = \max\limits_{y \in C} \left\lVert x-y \right\rVert$ or
+    $f(x) = \min\limits_{y \in C} \left\lVert x-y \right\rVert$.
+    
+
+# Terminology
+
+## Optimization problem
+
+A convex optimization problem (program) 
+\begin{equation}
+    \begin{aligned}
+    \min\limits_{x \in D} &\quad f(x) \\
+    \text{subject to} &\quad g_i(x) \leq 0 & \forall i \in [1:m] \\
+                    &\quad A x = b 
+    \end{aligned}
+\end{equation}
+where $f, g_i$ are convex and $D = \dom{f} \cap \dom{g_i}$.
+
+## Terms
+
+\begin{equation}
+    \begin{aligned}
+    \min\limits_{x \in D} &\quad f(x) \\
+    \text{subject to} &\quad g_i(x) \leq 0 & \forall i \in [1:m] \\
+                    &\quad A x = b 
+    \end{aligned}
+\end{equation}
+
+-   $f$ -- criteria or objective function.
+-   $g_i$ -- inequality constraints.
+-   $x$ is a *feasible point* if it satisfies the conditions, namely
+    $x \in D$, $g_i(x) \leq 0$, and $A x = b$.
+-   $\min f$ over feasible points points -- *optimal value* $f^*$.
+-   If $x$ is feasible and $f(x) = f^*$ then $x$ is an *optimum*
+    (solution, minimizer).
+-   Feasible $x$ is a *local optimum* if $\exists R > 0$ such that
+    $\forall y \in B_R(x)\ \ f(x) \leq f(y)$.
+-   If $x$ is feasible and $f(x) \leq f^* + \varepsilon$ then $x$ is
+    *$\varepsilon$-suboptimal*.
+-   If $x$ is feasible and $g_k(x) = 0$ then $g_k$ is *active* at $x$
+    (otherwise inactive).
+
+## Properties
+
+-   Solution set $X_{opt}$ is convex.
+-   If $f$ is strictly convex then the solution is unique.
+-   For convex optimization problems all local optima are global.
+-   The set of feasible points is convex.
+
+## Example: Lasso. 
+
+$\min\limits_\beta \left\lVert y - X \beta \right\rVert_2^2$
+subject to $\left\lVert \beta \right\rVert_1 \leq s$.
+
+-   $g_1(\beta) = \left\lVert \beta \right\rVert_1 - s$ -- convex, no
+    equality constraints.
+
+-   $X$ is $n \times p$ matrix
+
+    -   If $n \geq p$ and $X$ is full rank then
+        $\nabla^2 f(\cdot) = 2 {X}^\mathsf{T} X$ is positive definite
+        matrix. The function is strictly convex, therefore the solution
+        is unique.
+
+    -   If $p > n$ then $\exists \beta \neq 0$ such that $X \beta = 0$
+        $\implies$ multiple solutions.
+        
+
+## First Order Condition 
+
+-   convex problem with differentiable $f$
+
+-   a feasible $x$ is optimal iff $\nabla f(x)^{T}( x - y) \ge 0$,
+    $\forall$ feasible $y$
+
+-   if unconstrained, the condition reduces to $\nabla f(x)  = 0$
+
+$$\min\limits_x \frac{1}{2}x^{T}Q x + b^{T}x + c, \quad\quad Q \succeq 0$$
+- FOC: $\nabla f(x) = Q^{T}x + b = 0$\
+- if $Q \succ 0$ $\rightarrow$ $x^{*} = -Q^{-1}b$\
+- if $Q$ singular, $b \notin Col[Q] \rightarrow$ no solution\
+- if $Q$ singular, $b \in Col[Q] \rightarrow$ $x^{*} = -Q^{*}b + z$ with $z \in null[Q]$
+
+Projection onto convex $C$ : 
+$$\min\limits_{x} \|a-x\|_{2}^{2}\quad\quad \textrm{s.t.}\quad\quad
+x\in C$$
+-FOC : $\nabla f(x)^{T}(y-x) = (x - a)^{T}(y - x) \ge 0$,
+$\forall y\in C$ $\Leftrightarrow$ $a-x \in N_{2}(x)$
+
+# Useful operations
+
+## Partial optimization
+
+Recall: $h(x) = \min\limits_{y\in C}f(x,y)$ is convex if $f$ is convex, and $C$ is
+convex.
+
+
+\begin{equation}
+\begin{aligned}
+\min\limits_{x_{1},x_{2}} &\quad f(x_{1},x_{2}) &&\min\limits_{x_{1}}&\quad \tilde{f}(x_{1})\\
+\textrm{s.t.}&\quad g_{1}(x_{1}) \le 0 &\Longleftrightarrow &\textrm{s.t.}&\quad 
+g_{1}(x_{1}) &\le 0\\
+&\quad g_2(x_2) \le 0
+\end{aligned}
+\end{equation}
+
+where $\tilde{f}(x_1) = \min\Set{f(x_1,x_2): g_2(x_2)\le 0}$.
+
+- The right problem is convex if the left is (and vice versa)
+
+## Transformations
+
+- We can use a monotone increasing transformation
+$h: \mathbb{R} \rightarrow \mathbb{R}$:\
+$$\quad \min\limits_{x\in C} f(x) \Rightarrow \min\limits_{x\in C} h(f(x))$$\
+- We can use a change of variable transformation
+$\phi : \mathbb{R}^{n} \Rightarrow \mathbb{R}^{m}$ :\
+$$\quad \min\limits_{x \in C} f(x) \Leftrightarrow \min\limits_{\phi(y) \in C} f(\phi(y))$$
+
+__Example:__ Geometric Program
+
+$$\min\limits_{x \in C} f(x) = \sum\limits_{k=1}^{p}\gamma_{k}x_{1}^{a_{k_1}}x_{2}^{a_{k_{2}}} ..x_{n}^{a_{k_{n}}}\quad\quad
+\textrm{(posynomial)}$$
+
+- $C$ : involves (convex) inequalities in some form and equalities are affine.\
+- We can change above non-convex problem to the following convex problem
+by letting $y_{i} = \log x_{i}$ 
+
+## Eliminate equality constraints
+
+\begin{equation}
+\begin{aligned}
+\min\limits_{x}&\quad f(x) \\
+\textrm{s.t.} &\quad g_{i}(x) \le  0\\ &\quad Ax = b
+\end{aligned}
+\end{equation}
+
+- $x$ feasible means $\exists M : col[M]= null[A]$ and $x_0 s.t. Ax_{0} = b$ 
+- Let $x=My + x_{0}$
+
+Then the following is an equivalent problem:
+
+\begin{equation}
+\begin{aligned}
+\min\limits_{y}&\quad f(My+x_0) \\
+\textrm{s.t.} &\quad g_{i}(My+x_0) \le  0
+\end{aligned}
+\end{equation}
+
+
+## Introduce slack variables
+
+\begin{equation}
+\begin{aligned}
+\min\limits_{x}&\quad f(x) \\
+\textrm{s.t.} &\quad g_{i}(x) \leq  0\\ &\quad Ax = b
+\end{aligned}
+\end{equation}
+
+- Can add equality constraints:
+
+\begin{equation}
+\begin{aligned}
+\min\limits_{x,s}&\quad f(x) \\
+\textrm{s.t.} &\quad g_{i}(x) + s_i =  0\\
+&\quad s_i \geq 0\\
+&\quad Ax = b
+\end{aligned}
+\end{equation}
+
+- But this is nonconvex unless $g_i$ are affine
+
+__Relaxation__
+
+We can relax nonaffine
+constraints 
+$$\min\limits_{x \in C} f(x) \Rightarrow \min\limits_{x \in \tilde{C} } f(x)$$
+with $C \subset \tilde{C}$\
+
+- In this case optimum of new problem is smaller or equal to the optimum
+of the original problem.
+
+
+# Standard problems (with examples)
+
+## LP (Linear Programs) 
+
+$$\qquad \min_{x} c^{T}x$$ with affine constraints
+
+- Basis Pursuit\
+$\qquad \min\limits_{\beta} \| \beta_{0} \|$ s.t. $X \beta = y$\
+- Above problem can be relaxed to :\
+$\qquad \min\limits_{\beta} \| \beta \|_{1}$ s.t. $X \beta = y$.\
+- This relaxation can be reformulated to a LP problem:\
+$\qquad \min\limits_{\beta, z} 1^{T}z$ s.t.
+$z \ge \beta, z \ge -\beta, X\beta = y$
+- Dantzig selector\
+$\qquad \min\limits_{\beta} \| \beta \|_{1}$ s.t.
+$\|x^{T}(y - X\beta)\|_{\infty} \le \lambda$
+
+## QP (Quadratic program)
+
+Lasso, ridge regression, OLS, Portfolio Optimization
+
+## SDP (Semi-Definite program)
+
+\begin{equation}
+\begin{aligned}
+\min\limits_{X \in S_{n}} &\quad tr(C^{T}X)\\
+\textrm{s.t.}&\quad \tr{A_{i}^{\top} X} = b_{i}\\
+&\quad X \succeq 0
+\end{aligned}
+\end{equation}
+
+## Conic program
+
+\begin{equation}
+\begin{aligned}
+\min\limits_{x} &\quad c^\top x\\
+\textrm{s.t.}&\quad Ax=b\\
+&\quad D(x) + d \in K
+\end{aligned}
+\end{equation}
+
+
+$D$ a linear mapping, $K$ a closed convex cone.
+
+- Very similar to an LP
+
+## Relations
+
+$LP \subset QP \subset SOCP \subset SDP \subset CP(Conic Programming)$
+
+# Duality
+
+## Introduction
+
+- Suppose we want to _Lower bound_ our convex program
+- Find $B\leq \min_x f(x),\quad x\in C$.
+
+__Example:__
+
+\begin{equation}
+\begin{aligned}
+\min_{x,y} &\quad x + y\\
+\textrm{s.t.}&\quad x+y \geq 2\\
+&\quad x,y\geq 0
+\end{aligned}
+\end{equation}
+
+- What is $B$?
+
+## Harder
+
+__Example:__
+
+\begin{equation}
+\begin{aligned}
+\min_{x,y} &\quad x + 3y\\
+\textrm{s.t.}&\quad x+y \geq 2\\
+&\quad x,y\geq 0
+\end{aligned}
+\end{equation}
+
+- What is $B$?
+
+## Why?
+
+__Example:__
+
+\begin{equation}
+\begin{aligned}
+\min_{x,y} &\quad x + 3y\\
+\textrm{s.t.}&\quad x+y \geq 2\\
+&\quad x,y\geq 0
+\end{aligned} \Longleftrightarrow
+\begin{aligned}
+\min_{x,y} &\quad (x + y)+ 2y\\
+\textrm{s.t.}&\quad x+y \geq 2\\
+&\quad x,y\geq 0
+\end{aligned}
+\end{equation}
+
+- What is $B$?
+
+## Harderer
+
+__Example:__
+
+\begin{equation}
+\begin{aligned}
+\min_{x,y} &\quad px + qy\\
+\textrm{s.t.}&\quad x+y \geq 2\\
+&\quad x,y\geq 0
+\end{aligned}
+\end{equation}
+
+- What is $B$?
+
+## Solution
+
+\begin{equation}
+\begin{aligned}
+\min_{x,y} &\quad px + qy\\
+\textrm{s.t.}&\quad x+y \geq 2\\
+&\quad x,y\geq 0
+\end{aligned} \Longleftrightarrow
+\begin{aligned}
+\min_{x,y} &\quad px + qy\\
+\textrm{s.t.}&\quad ax+ay \geq 2a\\
+&\quad bx, cy\geq 0\\
+&\quad a,b,c \geq 0
+\end{aligned}
+\end{equation}
+
+- Adding implies
+$$ (a+b)x+(a+c)y\geq 2a$$ 
+- Set $p=(a+b)$ and $q=(a+c)$ we get that $B=2a$
+
+## Better
+
+- We can make this lower bound bigger by maximizing:
+
+\begin{equation}
+\begin{aligned}
+\max_{a,b,c} &\quad 2a\\
+\textrm{s.t.}&\quad a+b = p\\
+&\quad a+c=q\\
+&\quad a,b,c \geq 0
+\end{aligned}
+\end{equation}
+
+- This is the __Dual__ of the __Primal__ LP
+\begin{equation}
+\begin{aligned}
+\min_{x,y} &\quad px + qy\\
+\textrm{s.t.}&\quad x+y \geq 2\\
+&\quad x,y\geq 0
+\end{aligned}
+\end{equation}
+
+- Note that the number of Dual variables (3) is the number of Primal constraints
+
+## General LP
+
+\begin{equation}
+\begin{aligned}
+&\quad \textrm{(P)}\\
+\min_x &\quad c^\top x\\
+\textrm{s.t} &\quad Ax=b\\
+&\quad Gx\leq h
+\end{aligned}
+\quad\quad
+\begin{aligned}
+&\quad \textrm{(D)}\\
+\max_{u,v} &\quad -b^\top u - h^\top v  \\
+\textrm{s.t} &\quad -A^\top u -G^\top v=c\\
+&\quad v \geq 0
+\end{aligned}
+\end{equation}
+
+__Exercise__
+
+## Alternate derivation
+\begin{equation}
+\begin{aligned}
+\min_x &\quad c^\top x\\
+\textrm{s.t} &\quad Ax=b\\
+&\quad Gx\leq h
+\end{aligned}
+\end{equation}
+
+- Suppose that some $x$ is feasible.
+- Then, for that $x$,
+$$
+c^\top x \geq c^\top x + u^\top (Ax-b) + v^\top (Gx-h) =: L(x,u,v).
+$$
+as long as $v\geq 0$ and $u$ is anything.
+- We call $L(x,u,v)$ the __Lagrangian__.
+
+Now, suppose $C$ is the feasible set, and $f^*$ is the optimum
+$$
+f^* \geq \min_{x\in C} L(x,u,v) \geq \min_x L(x,u,v) =: g(u,v)
+$$
+
+- We call $g(u,v)$ the __Lagrange Dual Function__
+
+## Weak duality
+
+Consider the generic (primal) convex program
+\begin{equation}
+\begin{aligned}
+\min_x &\quad f(x)\\
+\textrm{s.t} &\quad l_i(x)=0\\
+&\quad h_i(x)\leq 0
+\end{aligned}
+\end{equation}
+
+- For feasible $x$, $v\geq 0$
+$$
+f(x) \geq f(x) + u^\top h(x) + v^\top l(x) \geq \min_x L(x,u,v) = g(u,v).
+$$
+- Therefore,
+$$
+f^* \geq \max_{\forall u, v\geq 0} g(u,v) = g^*.
+$$
+- This is __weak duality__.
+- Note that the Dual Program is always convex even if P is not (pointwise max of linear functions)
+
+## Strong duality
+
+$$
+f^* = g^*
+$$
+
+- Sufficient conditions for strong duality: __Slater's conditions__
+- If _P_ is convex and there exists $x$ such that for all $i$, $h_i(x) < 0$ (strictly feasible), then we have strong duality. (Extension: strict inequalities for $i$ when $h_i$ not affine.)
+- Sufficient conditions for strong duality of an LP: strong duality if either _P_ or _D_ is feasible. (Dual of _D_ = _P_)
+
+## Example
+
+Dual for Support Vector Machine
+
+\begin{equation}
+\begin{aligned}
+&\quad \textrm{(P)}\\
+\min_{\xi,\beta,\beta_0} &\quad \frac{1}{2}\norm{\beta}_2^2 +C\indicator^\top\xi\\
+\textrm{s.t} &\quad \xi_i \geq 0\\
+&\quad y_i(x_i^\top \beta+\beta_0)\geq 1-\xi_i
+\end{aligned}
+\quad\quad\quad
+\begin{aligned}
+&\quad \textrm{(D)}\\
+\max_{w} &\quad -\frac{1}{2}w^\top\tilde{X}^\top\tilde{X}w +\indicator^\top w\\
+\textrm{s.t} &\quad 0\leq w \leq C\indicator\\
+&\quad w^\top y = 0
+\end{aligned}
+\end{equation}
+where $\tilde{X} = \textrm{diag}(y)X$.
+
+- $w=0$ is Dual feasible.
+- Rewrite $0\leq w \leq C\indicator$ as $w>0,\quad w_i-C \leq 0$.
+- Thus, $w=0$ is strictly feasible.
+- We have strong duality by Slater's conditions.
+
+## KKT conditions
+
+1. Stationarity: $0 \in \partial(f(x)+u^Th(x)+v^Tl(x))$: For some pair $(u,v)$, $x$ minimizes the Lagrangian.
+2. Complementary slackness: $u_ih_i(x)=0 \,\,\, , \forall i$
+3. Primal feasibility: $h_i(x) \le 0 \,\,,\,\, l_i(x)=0$
+4. Dual feasibility: $u \ge 0$
+
+__Theorem__: Solutions $x^*$ and $(u^*,v^*)$ Primal-Dual optimal and $f^*=g^*$, then they satisfy the KKT conditions.
+
+__Theorem__: Solutions $x^*$ and $(u^*,v^*)$ that satisfy the KKT conditions are Primal-Dual optimal.
+
+
+__Example (SVM cont.)__
+
+1.  Stationarity: $w^\top y=0 \,\,,\,\, \beta=w^\top \tilde{X} \,\,,\,\, w=C1-v$
+2.  CS: $v_i\zeta_i=0 \,\,,\,\, w_i(1-\zeta_i-y_i(x_i^\top \beta+\beta_0))=0$
+3. Clear.
+4. Clear.
+
+## Constraints and Lagrangians
+
+When are the two following forms equivalent?
+
+constrained form (C): $$\begin{aligned}
+        \min f(x)\\
+        s.t. \,\, h(x) \le t
+    \end{aligned}$$
+
+Lagrangian form (L): $$\begin{aligned}
+    \min f(x)+\lambda h(x)
+    \end{aligned}$$
+
+When C is strictly feasible, strong duality holds. So there exists
+$\lambda$ such that for each $x$ that solves C those $x$ minimize L.
+
+Now, if $x^*$ solves L, then KKT condition for C hold by taking
+$t=h(x^*)$ and so $x^*$ is a solution of C.
+
+# Algorithms
+
+
+
+## References
