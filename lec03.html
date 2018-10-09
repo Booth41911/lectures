@@ -10,6 +10,69 @@
   <title>Lecture 3</title>
   <style type="text/css">code{white-space: pre;}</style>
   <style type="text/css">
+a.sourceLine { display: inline-block; line-height: 1.25; }
+a.sourceLine { pointer-events: none; color: inherit; text-decoration: inherit; }
+a.sourceLine:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode { white-space: pre; position: relative; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+code.sourceCode { white-space: pre-wrap; }
+a.sourceLine { text-indent: -1em; padding-left: 1em; }
+}
+pre.numberSource a.sourceLine
+  { position: relative; left: -4em; }
+pre.numberSource a.sourceLine::before
+  { content: attr(data-line-number);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; pointer-events: all; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {  }
+@media screen {
+a.sourceLine::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <style type="text/css">
 body
 {
 margin: 0 0 0 0;
@@ -374,6 +437,50 @@ DJM
 
 
 </div>
+<div id="why-learn-convex-optimization" class="slide section level2">
+<h1>Why learn convex optimization?</h1>
+<ul>
+<li>Many software packages have built-in optimizers</li>
+<li>This is fine in certain cases (I have a function! Throw it in there.)</li>
+<li>Will work “fine” some of the time.</li>
+<li>Immensely suboptimal most of the time</li>
+</ul>
+</div>
+<div id="questions-to-answer" class="slide section level2">
+<h1>Questions to answer</h1>
+<ul>
+<li>Is it convex?</li>
+<li>Can you take analytic derivatives?</li>
+<li>Can you solve them for zero?</li>
+<li>Is the problem small, low dimensional?</li>
+<li>Do you need to solve it only once?</li>
+<li>Can you find the analytic Hessian?</li>
+</ul>
+<p>Built-in optimizers are good if most of these answers are yes, or if they are all no.</p>
+<p>In other cases, it’s better to write custom code.</p>
+<p>Knowing a little about optimization can reveal properties of the solutions.</p>
+<p>Most packages do many things</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="kw">head</span>(optim)</a></code></pre></div>
+<pre><code>##                                                                 
+## 1 function (par, fn, gr = NULL, ..., method = c(&quot;Nelder-Mead&quot;,  
+## 2     &quot;BFGS&quot;, &quot;CG&quot;, &quot;L-BFGS-B&quot;, &quot;SANN&quot;, &quot;Brent&quot;), lower = -Inf, 
+## 3     upper = Inf, control = list(), hessian = FALSE)           
+## 4 {                                                             
+## 5     fn1 &lt;- function(par) fn(par, ...)                         
+## 6     gr1 &lt;- if (!is.null(gr))</code></pre>
+</div>
+<div id="classes-of-algorithms" class="slide section level2">
+<h1>Classes of algorithms</h1>
+<ul>
+<li>General purpose (Simulated Annealing, Genetic Algorithms)</li>
+<li>First order</li>
+<li>Second order</li>
+<li>Constrained/unconstrained?</li>
+<li>Linear/non-linear?</li>
+<li>Convex/Non-convex?</li>
+</ul>
+<p>We’re going to talk about first-order methods for convex problems.</p>
+</div>
 <div id="convex-sets-and-functions" class="title-slide slide section level1"><h1>Convex sets and functions</h1></div><div id="definitions" class="slide section level2">
 <h1>Definitions</h1>
 <p>Thanks: Much of this material is borrowed/copied from Ryan Tibshirani.</p>
@@ -515,8 +622,6 @@ DJM
 - if <span class="math inline">\(Q \succ 0\)</span> <span class="math inline">\(\rightarrow\)</span> <span class="math inline">\(x^{*} = -Q^{-1}b\)</span><br />
 - if <span class="math inline">\(Q\)</span> singular, <span class="math inline">\(b \notin Col[Q] \rightarrow\)</span> no solution<br />
 - if <span class="math inline">\(Q\)</span> singular, <span class="math inline">\(b \in Col[Q] \rightarrow\)</span> <span class="math inline">\(x^{*} = -Q^{*}b + z\)</span> with <span class="math inline">\(z \in null[Q]\)</span></p>
-<p>Projection onto convex <span class="math inline">\(C\)</span> : <span class="math display">\[\min\limits_{x} \|a-x\|_{2}^{2}\quad\quad \textrm{s.t.}\quad\quad
-x\in C\]</span> -FOC : <span class="math inline">\(\nabla f(x)^{T}(y-x) = (x - a)^{T}(y - x) \ge 0\)</span>, <span class="math inline">\(\forall y\in C\)</span> <span class="math inline">\(\Leftrightarrow\)</span> <span class="math inline">\(a-x \in N_{2}(x)\)</span></p>
 </div>
 <div id="useful-operations" class="title-slide slide section level1"><h1>Useful operations</h1></div><div id="partial-optimization" class="slide section level2">
 <h1>Partial optimization</h1>
@@ -559,7 +664,7 @@ g_{1}(x_{1}) &amp;\le 0\\
 \end{aligned}
 \end{equation}\]</span></p>
 <ul>
-<li><span class="math inline">\(x\)</span> feasible means <span class="math inline">\(\exists M : col[M]= null[A]\)</span> and <span class="math inline">\(x_0 s.t. Ax_{0} = b\)</span></li>
+<li><span class="math inline">\(x\)</span> feasible means <span class="math inline">\(\exists M : col[M]= null[A]\)</span> and <span class="math inline">\(x_0 \;\;\textrm{ s.t. }\;\;Ax_{0} = b\)</span></li>
 <li>Let <span class="math inline">\(x=My + x_{0}\)</span></li>
 </ul>
 <p>Then the following is an equivalent problem:</p>
@@ -598,12 +703,11 @@ g_{1}(x_{1}) &amp;\le 0\\
 <li>In this case optimum of new problem is smaller or equal to the optimum of the original problem.</li>
 </ul>
 </div>
-<div id="standard-problems-with-examples" class="title-slide slide section level1"><h1>Standard problems (with examples)</h1></div><div id="lp-linear-programs" class="slide section level2">
+<div id="standard-problems" class="title-slide slide section level1"><h1>Standard problems</h1></div><div id="lp-linear-programs" class="slide section level2">
 <h1>LP (Linear Programs)</h1>
-<p><span class="math display">\[\qquad \min_{x} c^{T}x\]</span> with affine constraints</p>
+<p><span class="math display">\[\min_{x} c^{T}x\]</span> with affine constraints</p>
 <ul>
-<li>Basis Pursuit<br />
-<span class="math inline">\(\qquad \min\limits_{\beta} \| \beta_{0} \|\)</span> s.t. <span class="math inline">\(X \beta = y\)</span><br />
+<li>Basis Pursuit (not an LP) <span class="math inline">\(\qquad \min\limits_{\beta} \| \beta \|_0\)</span> s.t. <span class="math inline">\(X \beta = y\)</span><br />
 </li>
 <li>Above problem can be relaxed to :<br />
 <span class="math inline">\(\qquad \min\limits_{\beta} \| \beta \|_{1}\)</span> s.t. <span class="math inline">\(X \beta = y\)</span>.<br />
@@ -611,7 +715,7 @@ g_{1}(x_{1}) &amp;\le 0\\
 <li>This relaxation can be reformulated to a LP problem:<br />
 <span class="math inline">\(\qquad \min\limits_{\beta, z} 1^{T}z\)</span> s.t. <span class="math inline">\(z \ge \beta, z \ge -\beta, X\beta = y\)</span></li>
 <li>Dantzig selector<br />
-<span class="math inline">\(\qquad \min\limits_{\beta} \| \beta \|_{1}\)</span> s.t. <span class="math inline">\(\|x^{T}(y - X\beta)\|_{\infty} \le \lambda\)</span></li>
+<span class="math inline">\(\qquad \min\limits_{\beta} \| \beta \|_{1}\)</span> s.t. <span class="math inline">\(\|X^{\top}(y - X\beta)\|_{\infty} \le \lambda\)</span></li>
 </ul>
 </div><div id="qp-quadratic-program" class="slide section level2">
 <h1>QP (Quadratic program)</h1>
@@ -620,7 +724,7 @@ g_{1}(x_{1}) &amp;\le 0\\
 <h1>SDP (Semi-Definite program)</h1>
 <p><span class="math display">\[\begin{equation}
 \begin{aligned}
-\min\limits_{X \in S_{n}} &amp;\quad tr(C^{T}X)\\
+\min\limits_{X \in S_{n}} &amp;\quad \mbox{tr}(()C^{T}X)\\
 \textrm{s.t.}&amp;\quad \mbox{tr}(A_{i}^{\top} X) = b_{i}\\
 &amp;\quad X \succeq 0
 \end{aligned}
@@ -784,6 +888,7 @@ f^* \geq \min_{x\in C} L(x,u,v) \geq \min_x L(x,u,v) =: g(u,v)
 \]</span></p>
 <ul>
 <li>We call <span class="math inline">\(g(u,v)\)</span> the <strong>Lagrange Dual Function</strong></li>
+<li>Maximizing <span class="math inline">\(g(u,v)\)</span> is the Dual problem.</li>
 </ul>
 </div><div id="weak-duality" class="slide section level2">
 <h1>Weak duality</h1>
@@ -833,22 +938,27 @@ f^* = g^*
 \end{aligned}
 \end{equation}\]</span> where <span class="math inline">\(\tilde{X} = \textrm{diag}(y)X\)</span>.</p>
 <ul>
-<li><span class="math inline">\(w=0\)</span> is Dual feasible.</li>
-<li>Rewrite <span class="math inline">\(0\leq w \leq C\mathbb{1}\)</span> as <span class="math inline">\(w&gt;0,\quad w_i-C \leq 0\)</span>.</li>
-<li>Thus, <span class="math inline">\(w=0\)</span> is strictly feasible.</li>
+<li><span class="math inline">\(w=0\)</span> is Dual feasible. (Don’t need strict, because affine)</li>
 <li>We have strong duality by Slater’s conditions.</li>
 </ul>
 </div><div id="kkt-conditions" class="slide section level2">
 <h1>KKT conditions</h1>
+<p><span class="math display">\[\begin{equation}
+\begin{aligned}
+\min_x &amp;\quad f(x)\\
+\textrm{s.t} &amp;\quad l_i(x)=0\\
+&amp;\quad h_i(x)\leq 0
+\end{aligned}
+\end{equation}\]</span></p>
 <ol style="list-style-type: decimal">
-<li>Stationarity: <span class="math inline">\(0 \in \partial(f(x)+u^Th(x)+v^Tl(x))\)</span>: For some pair <span class="math inline">\((u,v)\)</span>, <span class="math inline">\(x\)</span> minimizes the Lagrangian.</li>
-<li>Complementary slackness: <span class="math inline">\(u_ih_i(x)=0 \,\,\, , \forall i\)</span></li>
+<li>Stationarity: <span class="math inline">\(0 \in \partial(f(x)+v^\top h(x)+u^\top l(x))\)</span>: For some pair <span class="math inline">\((u,v)\)</span>, <span class="math inline">\(x\)</span> minimizes the Lagrangian.</li>
+<li>Complementary slackness: <span class="math inline">\(v_ih_i(x)=0 \,\,\, , \forall i\)</span></li>
 <li>Primal feasibility: <span class="math inline">\(h_i(x) \le 0 \,\,,\,\, l_i(x)=0\)</span></li>
-<li>Dual feasibility: <span class="math inline">\(u \ge 0\)</span></li>
+<li>Dual feasibility: <span class="math inline">\(v \ge 0\)</span></li>
 </ol>
 <p><strong>Theorem</strong>: Solutions <span class="math inline">\(x^*\)</span> and <span class="math inline">\((u^*,v^*)\)</span> Primal-Dual optimal and <span class="math inline">\(f^*=g^*\)</span>, then they satisfy the KKT conditions.</p>
 <p><strong>Theorem</strong>: Solutions <span class="math inline">\(x^*\)</span> and <span class="math inline">\((u^*,v^*)\)</span> that satisfy the KKT conditions are Primal-Dual optimal.</p>
-<p><strong>Example (SVM cont.)</strong></p>
+<p><strong>Example (SVM cont.)</strong> (eliminated the <span class="math inline">\(v\)</span> from Dual problem)</p>
 <ol style="list-style-type: decimal">
 <li>Stationarity: <span class="math inline">\(w^\top y=0 \,\,,\,\, \beta=w^\top \tilde{X} \,\,,\,\, w=C1-v\)</span></li>
 <li>CS: <span class="math inline">\(v_i\zeta_i=0 \,\,,\,\, w_i(1-\zeta_i-y_i(x_i^\top \beta+\beta_0))=0\)</span></li>
@@ -900,13 +1010,14 @@ f(y) \approx f(x) + \nabla f(x)^{\top}(y-x) + \frac{1}{2}(y-x)^\top H (y-x)
 t_k \quad s.t.\sum_{k=1}^{\infty} t_k = \infty ,\quad
               \sum_{k=1}^{\infty} t^{2}_k &lt; \infty
 \end{aligned}\end{equation}\]</span></p>
-<p><strong>Backtracking line search</strong> At each iteration choose best <span class="math inline">\(t\)</span></p>
+<p><strong>Backtracking line search</strong></p>
+<p>At each iteration choose best <span class="math inline">\(t\)</span></p>
 <ol style="list-style-type: decimal">
 <li>Set <span class="math inline">\(0 &lt;\beta &lt; 1 , 0 &lt; \alpha &lt;\frac{1}{2}\)</span></li>
 <li>At each <span class="math inline">\(k\)</span>, while <span class="math display">\[\begin{equation}f\left(x^{(k)} - t\nabla f(x^{(k)})\right) &gt; f(x^{(k)}) - \alpha t \left\lVert  f(x^{(k)}) \right\rVert^{2}_{2}\end{equation}\]</span> set <span class="math inline">\(t = \beta t\)</span> (shrink t)</li>
 <li><span class="math inline">\(x^{t+1} = x - t \nabla f(x_t)\)</span></li>
 </ol>
-<p>Exact line search</p>
+<p><strong>Exact line search</strong></p>
 <ul>
 <li>Backtracking approximates this</li>
 <li>At each <span class="math inline">\(k\)</span>, solve <span class="math display">\[
@@ -1039,7 +1150,7 @@ I_C(x) = \begin{cases} 0 &amp; x \in C\\ +\infty &amp; x \not\in C \end{cases}.
 <ul>
 <li>Let <span class="math inline">\(g(u):=f^*(-A^\top u)-b^\top u\)</span>.</li>
 <li>Our goal is to minimize <span class="math inline">\(g(u)\)</span>.</li>
-<li><p>The subdifferertial is given by <span class="math display">\[\partial g(u)= A\partial f^*(-A^\top u)-b^\top u,\]</span> but if <span class="math inline">\(x\in\arg\min_z L(z,u)\)</span> then <span class="math inline">\(\partial g(u)={Ax-b}\)</span>.</p></li>
+<li>The subdifferential is given by <span class="math display">\[\partial g(u)= A\partial f^*(-A^\top u)-b^\top u,\]</span> but if <span class="math inline">\(x\in\arg\min_z L(z,u)\)</span> then <span class="math inline">\(\partial g(u)={Ax-b}\)</span>.</li>
 <li>We may solve this as follows:
 <ol style="list-style-type: decimal">
 <li>guess initial <span class="math inline">\(u^{(0)}\)</span></li>
@@ -1108,13 +1219,18 @@ u^{(k)} &amp;= u^{(k-1)}+\rho(Ax^{(k-1)}+Bx^{(k-1)}-b)\\
 <li><span class="math inline">\(u^{(k)}\to u^*\)</span> (dual solution)</li>
 <li>doesn’t necessarily give <span class="math inline">\(x^{(k)}\to x^*\)</span> and <span class="math inline">\(z^{(k)}\to z^*\)</span></li>
 </ol>
-<p>The exact convergence rate is unknown, but empirically seems close to <span class="math inline">\(O(1/\epsilon)\)</span>.</p>
+<ul>
+<li>The exact convergence rate is unknown, but empirically seems close to <span class="math inline">\(O(1/\epsilon)\)</span>.</li>
+</ul>
 </div><div id="example-lasso-2" class="slide section level2">
 <h1>Example (LASSO)</h1>
 <p><span class="math display">\[\min_\beta \frac{1}{2}\left\lVert y-X\beta \right\rVert_2^2 +\lambda\left\lVert \alpha \right\rVert_1 \;\;\textrm{ s.t. }\;\;\alpha=\beta\]</span> ADMM update (compare with ridge regression): <span class="math display">\[\begin{aligned}
   \beta^{(k)}&amp;=\left(X^TX+\rho I\right)^{-1}\left(X^Ty+\rho(\alpha^{(k-1)}-w^{(k-1)})\right)\\ 
   \alpha^{(k)}&amp;=S_{\lambda/\rho}(\beta^{(k)}+w^{(k-1)})\\
   w^{(k)}&amp;=w^{(k-1)}+\beta^{(k)}-\alpha^{(k)}\\\end{aligned}\]</span></p>
+<ul>
+<li>There’s an “equivalence” between <span class="math inline">\(\beta\)</span> and <span class="math inline">\(\alpha\)</span>. You use <span class="math inline">\(\alpha\)</span> as the solution.</li>
+</ul>
 <p>Issues with ADMM:</p>
 <ul>
 <li>How to choose <span class="math inline">\(\rho\)</span>.</li>

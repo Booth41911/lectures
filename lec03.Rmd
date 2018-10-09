@@ -31,7 +31,44 @@ bibliography: booth-refs.bib
 \newcommand{\dom}[1]{\textrm{dom}\left(#1\right)}
 \newcommand{\st}{\;\;\textrm{ s.t. }\;\;}
 
+## Why learn convex optimization?
 
+- Many software packages have built-in optimizers
+- This is fine in certain cases (I have a function! Throw it in there.)
+- Will work "fine" some of the time.
+- Immensely suboptimal most of the time
+
+## Questions to answer
+
+- Is it convex?
+- Can you take analytic derivatives?
+- Can you solve them for zero?
+- Is the problem small, low dimensional?
+- Do you need to solve it only once?
+- Can you find the analytic Hessian?
+
+Built-in optimizers are good if most of these answers are yes, or if they are all no.
+
+In other cases, it's better to write custom code.
+
+Knowing a little about optimization can reveal properties of the solutions.
+
+Most packages do many things
+
+```{r}
+head(optim)
+```
+
+## Classes of algorithms
+
+- General purpose (Simulated Annealing, Genetic Algorithms)
+- First order 
+- Second order
+- Constrained/unconstrained?
+- Linear/non-linear?
+- Convex/Non-convex?
+
+We're going to talk about first-order methods for convex problems.
 
 # Convex sets and functions
 
@@ -277,11 +314,6 @@ $$\min\limits_x \frac{1}{2}x^{T}Q x + b^{T}x + c, \quad\quad Q \succeq 0$$
 - if $Q$ singular, $b \notin Col[Q] \rightarrow$ no solution\
 - if $Q$ singular, $b \in Col[Q] \rightarrow$ $x^{*} = -Q^{*}b + z$ with $z \in null[Q]$
 
-Projection onto convex $C$ : 
-$$\min\limits_{x} \|a-x\|_{2}^{2}\quad\quad \textrm{s.t.}\quad\quad
-x\in C$$
--FOC : $\nabla f(x)^{T}(y-x) = (x - a)^{T}(y - x) \ge 0$,
-$\forall y\in C$ $\Leftrightarrow$ $a-x \in N_{2}(x)$
 
 # Useful operations
 
@@ -331,7 +363,7 @@ by letting $y_{i} = \log x_{i}$
 \end{aligned}
 \end{equation}
 
-- $x$ feasible means $\exists M : col[M]= null[A]$ and $x_0 s.t. Ax_{0} = b$ 
+- $x$ feasible means $\exists M : col[M]= null[A]$ and $x_0 \st Ax_{0} = b$ 
 - Let $x=My + x_{0}$
 
 Then the following is an equivalent problem:
@@ -377,14 +409,14 @@ with $C \subset \tilde{C}$\
 of the original problem.
 
 
-# Standard problems (with examples)
+# Standard problems 
 
 ## LP (Linear Programs) 
 
-$$\qquad \min_{x} c^{T}x$$ with affine constraints
+$$\min_{x} c^{T}x$$ with affine constraints
 
-- Basis Pursuit\
-$\qquad \min\limits_{\beta} \| \beta_{0} \|$ s.t. $X \beta = y$\
+- Basis Pursuit (not an LP)
+$\qquad \min\limits_{\beta} \| \beta \|_0$ s.t. $X \beta = y$\
 - Above problem can be relaxed to :\
 $\qquad \min\limits_{\beta} \| \beta \|_{1}$ s.t. $X \beta = y$.\
 - This relaxation can be reformulated to a LP problem:\
@@ -392,7 +424,7 @@ $\qquad \min\limits_{\beta, z} 1^{T}z$ s.t.
 $z \ge \beta, z \ge -\beta, X\beta = y$
 - Dantzig selector\
 $\qquad \min\limits_{\beta} \| \beta \|_{1}$ s.t.
-$\|x^{T}(y - X\beta)\|_{\infty} \le \lambda$
+$\|X^{\top}(y - X\beta)\|_{\infty} \le \lambda$
 
 ## QP (Quadratic program)
 
@@ -402,7 +434,7 @@ Lasso, ridge regression, OLS, Portfolio Optimization
 
 \begin{equation}
 \begin{aligned}
-\min\limits_{X \in S_{n}} &\quad tr(C^{T}X)\\
+\min\limits_{X \in S_{n}} &\quad \tr(C^{T}X)\\
 \textrm{s.t.}&\quad \tr{A_{i}^{\top} X} = b_{i}\\
 &\quad X \succeq 0
 \end{aligned}
@@ -580,6 +612,7 @@ f^* \geq \min_{x\in C} L(x,u,v) \geq \min_x L(x,u,v) =: g(u,v)
 $$
 
 - We call $g(u,v)$ the __Lagrange Dual Function__
+- Maximizing $g(u,v)$ is the Dual problem.
 
 ## Weak duality
 
@@ -634,24 +667,31 @@ Dual for Support Vector Machine
 \end{equation}
 where $\tilde{X} = \textrm{diag}(y)X$.
 
-- $w=0$ is Dual feasible.
-- Rewrite $0\leq w \leq C\indicator$ as $w>0,\quad w_i-C \leq 0$.
-- Thus, $w=0$ is strictly feasible.
+- $w=0$ is Dual feasible. (Don't need strict, because affine)
 - We have strong duality by Slater's conditions.
 
 ## KKT conditions
 
-1. Stationarity: $0 \in \partial(f(x)+u^Th(x)+v^Tl(x))$: For some pair $(u,v)$, $x$ minimizes the Lagrangian.
-2. Complementary slackness: $u_ih_i(x)=0 \,\,\, , \forall i$
+\begin{equation}
+\begin{aligned}
+\min_x &\quad f(x)\\
+\textrm{s.t} &\quad l_i(x)=0\\
+&\quad h_i(x)\leq 0
+\end{aligned}
+\end{equation}
+
+
+1. Stationarity: $0 \in \partial(f(x)+v^\top h(x)+u^\top l(x))$: For some pair $(u,v)$, $x$ minimizes the Lagrangian.
+2. Complementary slackness: $v_ih_i(x)=0 \,\,\, , \forall i$
 3. Primal feasibility: $h_i(x) \le 0 \,\,,\,\, l_i(x)=0$
-4. Dual feasibility: $u \ge 0$
+4. Dual feasibility: $v \ge 0$
 
 __Theorem__: Solutions $x^*$ and $(u^*,v^*)$ Primal-Dual optimal and $f^*=g^*$, then they satisfy the KKT conditions.
 
 __Theorem__: Solutions $x^*$ and $(u^*,v^*)$ that satisfy the KKT conditions are Primal-Dual optimal.
 
 
-__Example (SVM cont.)__
+__Example (SVM cont.)__ (eliminated the $v$ from Dual problem)
 
 1.  Stationarity: $w^\top y=0 \,\,,\,\, \beta=w^\top \tilde{X} \,\,,\,\, w=C1-v$
 2.  CS: $v_i\zeta_i=0 \,\,,\,\, w_i(1-\zeta_i-y_i(x_i^\top \beta+\beta_0))=0$
@@ -721,6 +761,7 @@ t_k \quad s.t.\sum_{k=1}^{\infty} t_k = \infty ,\quad
 \end{aligned}\end{equation}
 
 __Backtracking line search__
+
 At each iteration choose best $t$
 
 1. Set $0 <\beta < 1 , 0 < \alpha <\frac{1}{2}$
@@ -730,7 +771,7 @@ set $t = \beta t$ (shrink t)
 3. $x^{t+1} = x - t \nabla f(x_t)$ 
 
 
-Exact line search
+__Exact line search__
 
 - Backtracking approximates this
 - At each $k$, solve
@@ -887,10 +928,9 @@ where $f^*$ is the __conjugate__ of $f$.
 - Let
 $g(u):=f^*(-A^\top u)-b^\top u$. 
 - Our goal is to minimize $g(u)$. 
-- The subdifferertial is given by
+- The subdifferential is given by
 $$\partial g(u)= A\partial f^*(-A^\top u)-b^\top u,$$ but if
 $x\in\arg\min_z L(z,u)$ then $\partial g(u)={Ax-b}$. 
-
 - We may solve this as
 follows:
     1. guess initial $u^{(0)}$ 
@@ -970,8 +1010,9 @@ rank):
 3.  $u^{(k)}\to u^*$ (dual solution)
 4.  doesn't necessarily give $x^{(k)}\to x^*$ and $z^{(k)}\to z^*$
 
-The exact convergence rate is unknown, but empirically seems close to
+- The exact convergence rate is unknown, but empirically seems close to
 $O(1/\epsilon)$.
+
 
 ## Example (LASSO)
 
@@ -980,6 +1021,8 @@ ADMM update (compare with ridge regression): $$\begin{aligned}
   \beta^{(k)}&=\left(X^TX+\rho I\right)^{-1}\left(X^Ty+\rho(\alpha^{(k-1)}-w^{(k-1)})\right)\\ 
   \alpha^{(k)}&=S_{\lambda/\rho}(\beta^{(k)}+w^{(k-1)})\\
   w^{(k)}&=w^{(k-1)}+\beta^{(k)}-\alpha^{(k)}\\\end{aligned}$$
+  
+- There's an "equivalence" between $\beta$ and $\alpha$. You use $\alpha$ as the solution.
 
 Issues with ADMM:
 
