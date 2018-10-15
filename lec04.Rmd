@@ -1,0 +1,908 @@
+---
+title: "Lecture 2"
+author: "DJM"
+date: "2 October 2018"
+output:
+  slidy_presentation:
+    css: http://mypage.iu.edu/~dajmcdon/teaching/djmRslidy.css
+    font_adjustment: 0
+  pdf_document: default
+bibliography: booth-refs.bib
+---
+
+\newcommand{\cdist}{\rightsquigarrow}
+\newcommand{\cprob}{\xrightarrow{P}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Expect}[1]{\mathbb{E}\left[ #1 \right]}
+\newcommand{\Var}[1]{\mathbb{V}\left[ #1 \right]}
+\newcommand{\Cov}[2]{\mathrm{Cov}\left[#1,\ #2\right]}
+\newcommand{\given}{\ \vert\ }
+\renewcommand{\P}{\mathbb{P}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\argmin}{\arg\min}
+\newcommand{\argmax}{\arg\max}
+\newcommand{\F}{\mathcal{F}}
+\newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
+\newcommand{\indicator}{\mathbbm{1}}
+\renewcommand{\bar}{\overline}
+\renewcommand{\hat}{\widehat}
+\newcommand{\tr}[1]{\mbox{tr}(#1)}
+\newcommand{\brt}{\widehat{\beta}_{r,t}}
+\newcommand{\brl}{\widehat{\beta}_{r,\lambda}}
+\newcommand{\bls}{\widehat{\beta}_{ls}}
+\newcommand{\blt}{\widehat{\beta}_{l,t}}
+\newcommand{\bll}{\widehat{\beta}_{l,\lambda}}
+\newcommand{\X}{\mathbb{X}}
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(message=FALSE, warning=FALSE,
+               fig.align='center',fig.width=10,
+               fig.height=6, cache=TRUE, autodep = TRUE)
+library(tidyverse)
+theme_set(theme_minimal(base_family="Times"))
+green = '#00AF64'
+blue = '#0B61A4'
+red = '#FF4900'
+orange = '#FF9200'
+colvec = c(green,blue,red,orange)
+```
+
+
+
+## An Overview of Classification
+
+Some examples:
+
+-   A person arrives at an emergency room with a set of symptoms that
+    could be 1 of 3 possible conditions. Which one is it?
+
+-   A online banking service must be able to determine whether each
+    transaction is fraudulent or not, using a customer's location, past
+    transaction history, etc.
+
+-   Given a set of individuals sequenced DNA, can we determine whether
+    various mutations are associated with different phenotypes?
+
+
+All of these problems are ~~not~~ regression
+problems. They are ~~classification~~ problems.
+
+## The Set-up
+
+It begins just like regression: suppose we have observations
+$$\mathcal{D}= \{(X_1,Y_1),\ldots,(X_n,Y_n)\}$$
+
+Again, we want to estimate a function that maps $X$ into $Y$ that helps
+us predict as yet observed data.
+
+(This function is known as a __classifier__)
+
+
+The same constraints apply:
+
+-   We want a classifier that predicts test data, not just the training
+    data.
+-   Often, this comes with the introduction of some bias to get lower
+    variance and better predictions.
+
+## How do we measure quality?
+
+In regression, we have $Y_i \in \mathbb{R}$ and use squared error loss
+
+
+Instead, let $Y \in \mathcal{G} = \{1,\ldots, G\}$
+
+(This is arbitrary, sometimes other numbers, such as $\{-1,1\}$ will be
+used)
+
+
+We again make predictions $\hat{Y}$ based on $\mathcal{D}$
+
+
+Our loss function is now a $G\times G$ matrix $L$ with
+
+-   zeros on the diagonals
+-   $\ell(g,g')$ on the off diagonal ($g\neq g'$)
+
+## How do we measure quality?
+
+Again, we appeal to risk
+$$R(\hat{g}) = \mathbb{E}_{Z} \ell_{\hat{g}}(Z)$$ If we use the law of
+total probability, this can be written
+$$R(\hat{g}) = \mathbb{E}_X \sum_{y=1}^G \ell_{\hat{g}}(Z = (y,X)) \mathbb{P}(Y = y | X)$$
+This can be minimized point wise over $X$, to produce
+$$g_*(X) = \argmin_{g \in \mathcal{G}} \sum_{g=1}^G \ell_g(Z = (g,X)) \mathbb{P}(Y = y | X)$$
+(This is the ~~Bayes' classifier~~. Also,
+$R(g_*)$ is the ~~Bayes' limit~~)
+
+## Best classifier
+
+If we make specific choices for $\ell$, we can find $g_*$ exactly
+
+
+As $Y$ takes only a few values, ~~zero-one~~
+prediction risk is natural
+$$\ell_g(Z) = \mathbf{1}_{Y\neq g(X)}(Z) \Rightarrow R(g) = \mathbb{E}[\ell_g(Z)] = \mathbb{P}(g(X) \neq Y),$$
+
+(This means we want to __label__ or
+__classify__ a new observation $(X,Y)$ such that
+$g(X) = Y$ as often as possible)
+
+\vspace{.15in}
+Under this loss, we have
+$$g_*(X) = \argmin_{g \in \mathcal{G}} \left[ 1 - \mathbb{P}(Y = g | X)\right]  = \argmax_{g \in \mathcal{G}} \mathbb{P}(Y = g | X )$$
+
+## Best classifier
+
+Suppose we encode a two-class response as $Y \in \{0,1\}$
+
+
+Let's continue to use [squared error loss]{style="color: orangemain"}:
+$\ell_f(Z) = (Y - f(X))^2$
+
+
+Then, the Bayes' rule is
+$$f_*(X) = \mathbb{E}[ Y | X] = \mathbb{P}(Y = 1 | X)$$ (using $f$ as it
+references squared error loss)
+
+Hence, we achieve the same Bayes' rule/limit with squared error
+classification by discretizing the probability:
+
+$$g_*(X) = \mathbf{1}(f_*(X) > 1/2)$$
+
+## Classification is easier than regression
+
+Let $\hat{f}$ be any estimate of $f_*$
+
+
+Let $\hat{g}(X) = \mathbf{1}(\hat{f}(X) > 1/2)$
+
+
+It can be shown that $$\begin{aligned}
+  &\mathbb{P}(Y \neq \hat{g}(X) | X) - \mathbb{P}(Y \neq g_*(X) | X) =  \\
+  & = 
+(2f_*(X) - 1)(\mathbf{1}(g_*(X) = 1) - \mathbf{1}(\hat{g}(X) = 1)) \\
+& = |2f_*(X) - 1|\mathbf{1}(g_*(X)\neq \hat{g}(X))  \\
+& =  2\left|f_*(X) - \frac{1}{2}\right|\mathbf{1}(g_*(X)\neq \hat{g}(X)) \end{aligned}$$
+
+
+~~Can you show this?~~
+
+## Classification is easier than regression
+
+Now
+$$g_*(X)\neq \hat{g}(X) \Rightarrow |\hat{f}(X) - f_*(X)| \geq |\hat{f}(X) - 1/2|$$
+Therefore $$\begin{aligned}
+ &\mathbb{P}(Y \neq \hat{g}(X)) - \mathbb{P}(Y \neq g_*(X)) =\\
+& =  \int(\mathbb{P}(Y \neq \hat{g}(X) | X) - \mathbb{P}(Y \neq g_*(X) | X))d\mathbb{P}_X   \\
+& =  \int 2\left|\hat{f}(X) - \frac{1}{2}\right|\mathbf{1}(g_*(X)\neq \hat{g}(X))d\mathbb{P}_X  \\
+& \leq  2\int |\hat{f}(X) - f_*(X)| \mathbf{1}(g_*(X)\neq \hat{g}(X))d\mathbb{P}_X \\
+& \leq  2\int |\hat{f}(X) - f_*(X)|d\mathbb{P}_X \end{aligned}$$
+
+## Bayes' rule and class densities
+
+Using Bayes' theorem $$\begin{aligned}
+f_*(X) & = \mathbb{P}(Y = 1 | X) \\
+& =
+\frac{p(X|Y = 1) \mathbb{P}(Y = 1)}{\sum_{g \in \{0,1\}} p(X|Y = g) \mathbb{P}(Y = g)} \\
+& =
+\frac{f_1(X) \pi}{ f_1(X)\pi + f_0(X)(1-\pi)}\end{aligned}$$ We call
+$f_g(X)$ the [class densities]{style="color: greenmain"}
+
+
+The Bayes' rule can be rewritten $$g_*(X) = 
+\begin{cases}
+1 & \textrm{ if } \frac{f_1(X)}{f_0(X)} > \frac{1-\pi}{\pi} \\
+0  &  \textrm{ otherwise}
+\end{cases}$$
+
+## How to find a classifier
+
+All of these prior expressions for $g_*$ give rise to classifiers
+
+-   __Empirical risk minimization:__ Choose a set
+    of classifiers $\Gamma$ and find $\hat{g} \in \Gamma$ that minimizes
+    some estimate of $R(g)$
+    
+    (This can be quite challenging as, unlike in regression, the
+    training error is nonconvex)
+
+-   __Regression:__ Find an
+    estimate $\hat{f}$ and plug it in to the Bayes' rule
+
+-   __Density estimation:__
+    Estimate $\hat{\pi}$ and $f_g$ from $\mathcal{D}$ where $Y =g$ and
+
+# Linear classifiers
+
+## Linear classifier
+
+As our classifier $\hat{g}$ takes a discrete number of values, it is
+equivalent to partitioning the covariate space into
+__regions__
+
+
+The boundaries between these regions are known as __decision
+boundaries__
+
+These decision boundaries are sets of points at which $\hat{g}$ is
+indifferent between two (or more) classes
+
+A __linear classifier__ is a $\hat{g}$ that
+produces linear decision boundaries (don't confuse this with "linear smoothers", regression functions which give $\hat{Y}=HY$ for some $H$)
+
+## Linear classifier: Example
+
+Suppose $\mathcal{G} = \{ 0,1\}$ and we form the GLM logistic regression
+
+The posterior probabilities are $$\begin{aligned}
+\mathbb{P}(Y = 1 | X)  & = \frac{\exp\{\beta_0 + \beta^{\top}X\}}{1 + \exp\{\beta_0 + \beta^{\top}X\}} \\
+\mathbb{P}(Y = 0 | X) & = \frac{1}{1 + \exp\{\beta_0 + \beta^{\top}X\}}\end{aligned}$$
+
+The _logit_ (i.e.: log odds) transformation
+forms a linear decision boundary
+$$\log\left( \frac{\mathbb{P}(Y = 1 | X)}{\mathbb{P}(Y = 0 | X) } \right) = \beta_0 + \beta^{\top} X$$
+The decision boundary is the hyperplane
+$\{X : \beta_0 + \beta^{\top} X = 0\}$
+
+(Log-odds below 0, classify as 0, above 0 classify as a 1)
+
+## Logit example
+
+```{r, echo=FALSE}
+set.seed(2018-03-30)
+logit <- function(z) log(z)-log(1-z)
+ilogit <- function(z) exp(z)/(1+exp(z))
+
+sim.logistic <- function(X, beta0, beta) {
+  linear.parts = beta0 + X%*%beta 
+  y = as.factor(rbinom(nrow(X), size=1, prob=ilogit(linear.parts)))
+  data.frame(y,X)
+}
+X <- matrix(runif(100*2, min=-1,max=1),ncol=2)
+df = sim.logistic(X, -2.5, c(-5,5))
+```
+
+```{r}
+g <- ggplot(df, aes(X1,X2,color=y)) + geom_point() +
+  scale_color_manual(values=c(blue,red))
+g
+log.lm = glm(y~.,data=df, family='binomial')
+summary(log.lm)
+```
+
+## What is the line? 
+
+* Suppose we decide "Predict `1` if `predict(log.lm) > 0.5`".
+
+* This means "For which combinations of `x1` and `x2` is
+\[
+\frac{\exp\left(\widehat{\beta}_0 + \widehat{\beta}_1 x_1 + \widehat{\beta}_2 x_2\right)}
+{1+\exp\left(\widehat{\beta}_0 + \widehat{\beta}_1 x_1 + \widehat{\beta}_2 x_2\right)} > 0.5 ?
+\]
+
+* Solving this gives
+\[
+\widehat{\beta}_0 + \widehat{\beta}_1 x_1 + \widehat{\beta}_2 x_2 > \log(.5)-\log(1-.5) 
+\Rightarrow x_2 > -\frac{\widehat{\beta}_0 + \widehat{\beta}_1 x_1}{\widehat{\beta}_2}.
+\]
+
+* That's just a line. Let's plot it:
+```{r}
+cc = coefficients(log.lm)
+g + geom_abline(intercept = -cc[1]/cc[3], slope = -cc[2]/cc[3], color=green)
+```
+
+## Lots of different boundaries
+
+```{r, echo=FALSE}
+decision.boundary <- function(ddd){
+  cc = coefficients(glm(y~X1+X2,data=ddd,family='binomial'))
+  return(data.frame(intercept=-cc[1]/cc[3],slope=-cc[2]/cc[3]))
+}
+newdf = list()
+for(i in 1:4) newdf[[i]] = sim.logistic(X, rnorm(1), rnorm(2,sd=3))
+names(newdf) = letters[1:4]
+newdf = data.table::rbindlist(newdf, idcol="index") %>% group_by(index)
+dbs = newdf %>% do(decision.boundary(.))
+ggplot(newdf, aes(X1,X2,color=y)) + geom_point() +
+  scale_color_manual(values=c(blue,red)) + facet_wrap(~index) +
+  geom_abline(mapping=aes(intercept=intercept, slope=slope),data=dbs,color=green)
+dbs
+```
+
+
+
+## Bayes' rule-ian approach
+
+The decision theory for classification indicates we need to know the
+posterior probabilities: $\mathbb{P}(Y = g | X)$ for doing optimal
+classification
+
+\vspace{.15in}
+Suppose that
+
+-   $p_g(X) = \mathbb{P}(X | Y = g)$ is the
+    [likelihood]{style="color: orangemain"} of the covariates given the
+    class labels
+
+-   $\pi_g = \mathbb{P}(Y=g)$ is the prior
+
+Then
+
+$$\mathbb{P}(Y = g | X) = \frac{p_g(X) \pi_g}{\sum_{g \in \mathcal{G}}p_g(X) \pi_g}  \propto p_g(X) \pi_g$$
+
+[[Conclusion:]{style="color: greenmain"}]{.smallcaps} Having the class
+densities almost gives us the Bayes' rule as the training proportions
+can usually be used to estimate $\pi_g$
+
+(Though, sometimes estimating $\pi_g$ can be nontrivial/impossible)
+
+## Bayes' rule-ian approach: Summary
+
+There are many techniques based on this idea
+
+-   Linear/quadratic discriminant analysis
+
+    (Estimates $p_g$ assuming multivariate Gaussianity)
+
+-   General nonparametric density estimators
+
+-   Naive Bayes (Factors $p_g$ assuming conditional independence)
+
+## Discriminant analysis
+
+Suppose that
+$$p_g(X) \propto |\Sigma_g|^{-1/2} \exp\left\{-(X - \mu_g)^{\top}\Sigma_g^{-1}(X - \mu_g)/2\right\}$$
+
+Let's assume that [$\Sigma_g \equiv \Sigma$]{style="color: orangemain"}.
+
+Then the log-odds between two classes $g,g'$ is: $$\begin{aligned}
+\log\left( \frac{\mathbb{P}(Y = g | X)}{\mathbb{P}(Y = g' | X) } \right)
+&  = 
+\log\frac{p_g(X)}{p_{g'}(X)} + \log \frac{\pi_g}{\pi_{g'}}\\
+& = 
+\log \frac{\pi_g}{\pi_{g'}} - (\mu_{g} + \mu_{g'})^{\top} \Sigma^{-1} (\mu_g - \mu_{g'})/2  \\
+& \qquad+ X^{\top} \Sigma^{-1}(\mu_g - \mu_{g'})\end{aligned}$$
+
+This is linear in $X$, and hence has a linear decision boundary
+
+## Types of discriminant analysis
+
+The __linear discriminant function__ is
+(proportional to) the log posterior:
+$$\delta_g(X) = \log \pi_g + X^{\top} \Sigma^{-1}\mu_g  - \mu_{g}^{\top} \Sigma^{-1} \mu_g /2$$
+and we assign $g(X) = \argmin_g \delta_g(X)$
+
+(This is just minimum Euclidean distance, weighted by the covariance
+matrix and prior probabilities)
+
+## LDA parameter estimation
+
+Now, we must estimate $\mu_g$ and $\Sigma$. If we\...
+
+-   use the intuitive estimators $\hat{\mu}_g = \overline{X}_g$ and
+    $$\hat\Sigma = \frac{1}{n-G} \sum_{g \in \mathcal{G}} \sum_{i \in g} (X_i - \hat{\mu}_g) (X_i - \hat{\mu}_g)^{\top}$$
+    then we have produced ~~linear discriminant
+    analysis~~ (LDA)
+
+
+## LDA intuition
+
+How would you classify a point with this data?
+
+<!--\centering
+![image](../figures/multivariateGaussianEllipseLDA.pdf){width="2.4in"}
+-->
+
+\vspace{.15in}
+We can just classify an observation to the
+[closest]{style="color: orangemain"} mean $(\overline{X}_g)$
+
+\vspace{.15in}
+What do we mean by close? (Need to define distance)
+
+## LDA intuition
+
+Intuitively, assigning observations to the nearest $\overline{X}_g$ (but
+ignoring the covariance) would amount to 
+\[
+\begin{aligned}
+\tilde{g}(X) 
+& =  
+\argmin_g \norm{X - \overline{X}_g}_2^2  \\
+& = 
+ \argmin_g X^{\top}X - 2X^{\top}\overline{X}_g + \overline{X}_g^{\top}\overline{X}_g \\
+& = 
+ \argmin_g {-X^{\top}\overline{X}_g} +  {\frac{1}{2}\overline{X}_g^{\top}\overline{X}_g} \\
+ & \textrm{{compare this to:}} \\
+\hat{g} 
+& = \argmin_g \underbrace{ {X^{\top}\hat\Sigma_{\lambda}^{-1}\overline{X}_g} - {\frac{1}{2}\overline{X}_g^{\top}\hat{\Sigma}_{\lambda}^{-1} \overline{X}_g} }_{likelihood}+ \underbrace{\log(\hat\pi_g)}_{prior} \end{aligned}
+\]
+
+\vspace{.15in}
+The difference is we weight the distance by $\hat\Sigma_{\lambda}^{-1}$
+and weight the class assignment by fraction of observations in each
+class.
+
+(Note: this generalization of Euclidean distance is called
+[Mahalanobis]{style="color: greenmain"} distance)
+
+## Intuition
+
+What if the data looked like this?
+
+<!--\centering
+![image](../figures/LDAmotivation1.pdf){width="2.2in"}
+![image](../figures/LDAmotivationDecisionBoundary1.pdf){width="2.2in"}
+-->
+
+## Intuition
+
+Or this?
+
+<!--\centering
+![image](../figures/LDAmotivation2.pdf){width="2.2in"}
+![image](../figures/LDAmotivationDecisionBoundary2.pdf){width="2.2in"}
+-->
+
+## Intuition
+
+How about this?
+
+<!--\centering
+![image](../figures/LDAmotivation3.pdf){width="2.2in"}
+![image](../figures/LDAmotivationDecisionBoundary3.pdf){width="2.2in"}
+-->
+
+## Intuition
+
+What about now?
+
+<!--\centering
+![image](../figures/LDAmotivation4.pdf){width="2.2in"}
+![image](../figures/LDAmotivationDecisionBoundary4.pdf){width="2.2in"}
+-->
+
+
+## Performance of LDA
+
+The quality of the classifier produced by LDA depends on two things:
+
+-   The sample size $n$
+
+    (This determines how accurate the $\hat \pi_g$, $\hat \mu_g$, and
+    $\hat\Sigma$ are)
+
+-   How wrong the LDA assumptions are
+
+    (That is: $X| Y= g$ is a Gaussian with mean $\mu_g$ and variance
+    $\Sigma$)
+
+\vspace{.15in}
+[[Recall:]{style="color: greenmain"}]{.smallcaps} The [decision
+boundary]{style="color: orangemain"} of a classifier are the values of
+$X$ such that the classifier is [indifferent]{style="color: orangemain"}
+between two (or more) levels of $Y$
+
+\vspace{.15in}
+A [linear]{style="color: orangemain"} decision boundary is when this set
+of values looks like a line
+
+## LDA: under correct assumptions
+
+<!--\centering
+![For $n_g = 10$](../figures/LDAbayesRuleEqualCovs10.pdf){width="3in"}
+-->
+
+## LDA: under correct assumptions
+
+<!--\centering
+![For $n_g = 100$](../figures/LDAbayesRuleEqualCovs100.pdf){width="3in"}
+-->
+
+## LDA: under correct assumptions
+
+<!--\centering
+![For
+$n_g = 1000$](../figures/LDAbayesRuleEqualCovs1000.pdf){width="3in"}
+-->
+
+## LDA: mildly incorrect assumptions
+
+<!--\centering
+![For
+$n_g = 10$](../figures/LDAbayesRuleMildDiffCovs10.pdf){width="3in"}
+-->
+
+## LDA: mildly incorrect assumptions
+
+<!--\centering
+![For
+$n_g = 100$](../figures/LDAbayesRuleMildDiffCovs100.pdf){width="3in"}
+-->
+
+## LDA: mildly incorrect assumptions
+
+<!--\centering
+![For
+$n_g = 1000$](../figures/LDAbayesRuleMildDiffCovs1000.pdf){width="3in"}
+-->
+
+## LDA: very incorrect assumptions
+
+<!--\centering
+![For $n_g = 10$](../figures/LDAbayesRuleDiffCovs10.pdf){width="3in"}
+-->
+
+## LDA: very incorrect assumptions
+
+<!--\centering
+![For $n_g = 100$](../figures/LDAbayesRuleDIffCovs100.pdf){width="3in"}
+-->
+
+## LDA: very incorrect assumptions
+
+<!--\centering
+![For
+$n_g = 1000$](../figures/LDAbayesRuleDiffCovs1000.pdf){width="3in"}
+-->
+
+## The LDA variance assumption
+
+Returning to the assumption: $\Sigma_g = \Sigma$
+
+\vspace{.15in}
+The assumption provides two benefits:
+
+-   Allows for estimation when $n$ [isn't]{style="color: orangemain"}
+    large compared with $Gp(p+1)/2$
+
+-   Lowers the variance of the procedure (but produces bias)
+
+    (This can be seen by the estimation of fewer parameters)
+
+## Regularizing LDA
+
+-   regularize these 'plug-in' estimates, we can form [regularized
+    discriminant analysis]{style="color: orangemain"} (Friedman (1989)).
+    This could be (for $\lambda \in [0,1]$):
+    $$\hat{\Sigma}_{\lambda} = \lambda \hat{\Sigma} + (1-\lambda) \hat\sigma^2 I$$
+
+ 
+
+## The LDA variance assumption
+
+However, when $n$ is large compared with $Gp(p+1)/2$
+
+(Say, $\min n_g \geq 40 p(p+1)/2$)
+
+\vspace{.15in}
+Then the induced bias can outweigh the variance
+
+(This is hard to determine. Usually compare the prediction error on test
+set)
+
+\vspace{.15in}
+We relax the assumption and let $X | Y=g$ have
+
+-   mean $\mu_g$
+
+-   variance $\Sigma_{{g}}$
+
+\vspace{.15in}
+This makes the decision boundary [quadratic]{style="color: orangemain"}
+
+(Instead of linear)
+
+# Quadratic Discriminant Analysis
+
+## Quadratic discriminant analysis
+
+If we drop the assumption regarding equal covariances, we get:
+$$\delta_g(X) = \log \pi_g + X^{\top} \Sigma_g^{-1}\mu_g  - \mu_{g}^{\top} \Sigma_g^{-1} \mu_g /2 - \log | \Sigma_g|/2$$
+($\Sigma_g$ can be estimated by the sample covariance of the
+observations in group $g$)
+
+This produces [quadratic discriminant
+analysis]{style="color: greenmain"} (QDA)
+
+\vspace{.15in}
+In my experience, QDA works well if $n$ is large relative to $p$
+
+(However, it isn't often computable in practice; too many parameters)
+
+We can augment regularized discriminant analysis to shrink each
+$\hat{\Sigma}_g$ to $\hat{\Sigma}$ or even to $\hat{\Sigma}_\lambda$
+$$\hat{\Sigma}_{g,(\gamma,\lambda)}  = \gamma\hat{\Sigma}_g + (1-\gamma)\hat{\Sigma}_{\lambda}$$
+(To the best of my knowledge, little is formally known about this
+procedure. See Guo et al. (2006) for an empirical comparison )
+
+## QDA: More flexibility than needed
+
+<!--\centering
+![For $n_g = 100$. Note linear Bayes' rule, nonlinear QDA decision
+boundary](../figures/QDAbayesRuleEqualCovs100.pdf){width="2.8in"}
+-->
+
+## QDA: More flexibility than needed
+
+<!--\centering
+![For $n_g = 300$. Note linear Bayes' rule, nonlinear QDA decision
+boundary](../figures/QDAbayesRuleEqualCovs300.pdf){width="2.8in"}
+-->
+
+## QDA: More flexibility than needed
+
+<!--\centering
+![For $n_g = 2000$. Note linear Bayes' rule. The nonlinear QDA decision
+boundary has converged to Bayes'
+rule](../figures/QDAbayesRuleEqualCovs2000.pdf){width="2.8in"}
+-->
+
+## QDA: Different $\Sigma_g$ assumption needed
+
+<!--\centering
+![For $n_g = 100$. Note [nonlinear]{style="color: orangemain"} Bayes'
+rule, nonlinear QDA decision
+boundary](../figures/QDAbayesRuleDiffCovs100.pdf){width="2.8in"}
+-->
+
+## QDA: Different $\Sigma_g$ assumption needed
+
+<!--\centering
+![For $n_g = 300$. Note [nonlinear]{style="color: orangemain"} Bayes'
+rule, nonlinear QDA decision
+boundary](../figures/QDAbayesRuleDIffCovs300.pdf){width="2.8in"}
+-->
+
+## QDA: Different $\Sigma_g$ assumption needed
+
+<!--\centering
+![For $n_g = 2000$. Note [nonlinear]{style="color: orangemain"} Bayes'
+rule, nonlinear QDA decision
+boundary](../figures/QDAbayesRuleDiffCovs2000.pdf){width="2.8in"}
+-->
+
+## LDA vs. QDA: under correct assumptions
+
+<!-- \centering
+![For
+$n_g = 100$](../figures/LDAbayesRuleEqualCovs100.pdf "fig:"){width="2.3in"}
+![For
+$n_g = 100$](../figures/QDAbayesRuleEqualCovs100.pdf "fig:"){width="2.3in"}
+-->
+
+## LDA vs. QDA: very incorrect assumptions
+
+<!-- centering
+![LDA $n_g = 1000$, QDA
+$n_g = 2000$](../figures/LDAbayesRuleDiffCovs1000.pdf "fig:"){width="2.3in"}
+![LDA $n_g = 1000$, QDA
+$n_g = 2000$](../figures/QDAbayesRuleDiffCovs2000.pdf "fig:"){width="2.3in"}
+-->
+
+## LDA in [R]{style="color: brick"}
+
+We can do this readily in [R]{style="color: brick"}
+
+[Reduced rank LDA]{style="color: greenmain"}
+
+## Reduced rank LDA
+
+Part of the popularity of LDA is that it provides [dimension
+reduction]{style="color: orangemain"} as well
+
+\vspace{.15in}
+The $G$ class centroids $\mu_g$ must all lie in an affine subspace of
+dimension $G-1$ (presuming $G < p$)
+
+(Let $\mathcal{H}_{G-1}$ be this subspace)
+
+\vspace{.15in}
+If $G$ is much less than $p$, this will be a substantial drop in
+dimension
+
+## Reduced rank LDA
+
+In practice, we can compute LDA from spectral information:
+$$\begin{aligned}
+\delta_g(X) 
+& = 
+\log \pi_g + X^{\top} \Sigma^{-1}\mu_g  - \mu_{g}^{\top} \Sigma^{-1} \mu_g /2 \\
+&\propto
+\log \pi_g + (X - \mu_g)^{\top} \Sigma^{-1}(X - \mu_g)/2 \end{aligned}$$
+So,
+
+1.  [[Spectrum:]{style="color: greenmain"}]{.smallcaps} Form
+    $\hat{\Sigma}_{\lambda} = U D U^{\top}$
+
+2.  [[Sphere:]{style="color: greenmain"}]{.smallcaps} Rewrite your data
+    as $\tilde{X} \leftarrow D^{-1/2} U^{\top} X$
+
+3.  [[Assign:]{style="color: greenmain"}]{.smallcaps} Classify to the
+    closest mean in transformed space
+
+    (Penalizing by estimate of prior probability)
+
+## Reduced rank LDA
+
+We can ignore any information orthogonal to $\mathcal{H}_{G-1}$, as it
+contributes to each class equally (in the sphered space)
+
+\vspace{.15in}
+So, project $\tilde{X}$ onto $\mathcal{H}_{G-1}$ and make distance
+computations there
+
+\vspace{.15in}
+When $G = 2,3$, this means we can plot the projection onto
+$\mathcal{H}_{G-1}$ with no loss of information about the LDA solution
+
+\vspace{.15in}
+If $G > 3$, then we may wish to project onto a
+[reduced]{style="color: orangemain"} space
+$\mathcal{H}_{L} \subset \mathcal{H}_{G-1}$
+
+\vspace{.15in}
+We'd like $\mathcal{H}_L$ to maintain the most amount of information
+possible for assigning to classes
+
+## Reduced rank LDA
+
+This can be done via the following procedure
+
+1.  [[Centroids:]{style="color: greenmain"}]{.smallcaps} Compute
+    $G \times p$ matrix $M$ of class centroids
+
+2.  [[Covariance:]{style="color: greenmain"}]{.smallcaps} Form
+    $\hat\Sigma$ as the common covariance matrix
+
+3.  [[Sphere:]{style="color: greenmain"}]{.smallcaps}
+    $\tilde{M} = M \hat\Sigma^{-1/2}$
+
+4.  [[Between Covariance:]{style="color: greenmain"}]{.smallcaps} Find
+    covariance matrix for $\tilde{M}$, call it $B$
+
+5.  [[Spectrum]{style="color: greenmain"}]{.smallcaps} Compute
+    $B = V S V^{\top}$
+
+\vspace{.15in}
+Now, span$(V_L) = \mathcal{H}_L$
+
+\vspace{.15in}
+Also, the coordinates of the data in this space are
+$Z_k = v_k^{\top} \hat\Sigma^{-1/2}X$
+
+\vspace{.15in}
+These derived variables are commonly called [canonical
+coordinates]{style="color: greenmain"}
+
+## Reduced rank LDA: Summary
+
+-   Gaussian likelihoods with identical covariances leads to linear
+    decision boundaries (LDA)
+
+-   We can actually do all relevant computations/graphics on the reduced
+    space $\mathcal{H}_{G-1}$
+
+-   If this isn't small enough, we can do 'optimal' dimension reduction
+    to $\mathcal{H}_L$
+
+\vspace{.15in}
+As an aside, this procedure is identical to [Fisher's discriminant
+analysis]{style="color: greenmain"}
+
+## Logistic regression
+
+Logistic regression for two classes simplifies to a likelihood:
+
+(Using $\pi_i(\beta) = \mathbb{P}(Y = 1 | X = X_i,\beta)$)
+$$\begin{aligned}
+\ell(\beta) 
+& = 
+\sum_{i=1}^n \left( Y_i\log(\pi_i(\beta)) + (1-Y_i)\log(1-\pi_i(\beta))\right) \\
+& = 
+\sum_{i=1}^n \left( Y_i\log(e^{\beta^{\top}X_i}/(1+e^{\beta^{\top}X_i})) - (1-Y_i)\log(1+e^{\beta^{\top}X_i})\right) \\
+& = 
+\sum_{i=1}^n \left( Y_i\beta^{\top}X_i -\log(1 + e^{\beta^{\top} X_i})\right)\end{aligned}$$
+
+This gets optimized via Newton-Raphson updates and iteratively reweighed
+least squares
+
+## Sparse logistic regression
+
+This procedure suffers from all the same problems as least squares
+
+\vspace{.15in}
+We can use penalized likelihood techniques in the same way as we did
+before
+
+\vspace{.15in}
+This means maximizing (over $\beta_0,\beta$):
+$$\sum_{i=1}^n \left( Y_i(\beta_0 + \beta^{\top}X_i) -\log(1 + e^{\beta_0 + \beta^{\top} X_i})\right)  
+- \lambda (\alpha||\beta||_1+ (1-\alpha) ||\beta||_2^2)$$ (Don't
+penalize the intercept and do standardize the covariates)
+
+\vspace{.15in}
+This is the [logistic elastic net]{style="color: greenmain"}
+
+## Sparse logistic regression: Software
+
+Using the [R]{style="color: brick"} package
+[glmnet]{style="color: brick"} finds the minimum CV solution over a grid
+of $\lambda$ values
+
+\vspace{.15in}
+Unfortunately, the computations are more difficult for path algorithms
+(such as the [lars]{style="color: brick"} package) due to the
+coefficient profiles being only piecewise smooth
+
+\vspace{.15in}
+[glmpath]{style="color: brick"} is an [R]{style="color: brick"} package
+that does quadratic approximations to the profiles, while still
+computing the exact points at which the active set changes
+
+\vspace{.15in}
+Park, Hastie (2007).  It is necessary to set a `step' size argument for the approximation.
+
+
+## Logistic versus LDA
+
+The log posterior odds via the Gaussian likelihood
+([LDA]{style="color: orangemain"}) for class $g$ versus $G$ are
+$$\begin{aligned}
+\log \frac{ \mathbb{P}(Y = g | X)}{\mathbb{P}(Y = G | X) } 
+& =
+{\log \frac{\pi_g}{\pi_{G}} - (\mu_{g} + \mu_{G})^{\top} \Sigma^{-1} (\mu_g - \mu_{G})/2 }  \\
+& \qquad +  X^{\top} {\Sigma^{-1}(\mu_g - \mu_{G})} \\
+& = {\alpha_{g,0} }+ {\alpha_g}^{\top}X\end{aligned}$$
+
+\vspace{.15in}
+Likewise, multi class [logistic]{style="color: orangemain"} follows (for
+$g = 1,\ldots,G-1$): $$\begin{aligned}
+\log \frac{ \mathbb{P}(Y = g | X)}{\mathbb{P}(Y = G | X) } 
+& =
+{\beta_{g,0}} + {\beta_{g}}^{\top}X\end{aligned}$$
+(The choice of base class $G$ is arbitrary)
+
+\vspace{.15in}
+[[They both specify the log-odds as linear
+models!]{style="color: greenmain"}]{.smallcaps}
+
+## Logistic versus LDA
+
+We can write the joint distribution of $Y$ and $X$ as
+$$\mathbb{P}(X,Y) = \mathbb{P}(Y|X)\mathbb{P}(X)$$ The previous slide
+shows that $\mathbb{P}(Y|X)$ is the same for both methods:
+$$\mathbb{P}(Y = g | X)
+ = 
+ \frac{e^{\alpha_{g,0} + \alpha_{g}^{\top}X}}{1 + \sum_{k = 1}^{G-1} e^{\alpha_{k,0} + \alpha_{k}^{\top}X}}$$
+
+-   Logistic regression leaves $\mathbb{P}(X)$ arbitrary, and implicitly
+    estimates it with the empirical measure
+
+    (This could be interpreted as a
+    [frequentist]{style="color: orangemain"} approach, where we are
+    maximizing the likelihood only and using the improper uniform prior)
+
+-   LDA models
+    $$\mathbb{P}(X,Y=g) = \mathbb{P}(X | Y=g) \mathbb{P}(Y=g) = N(X;\mu_g,\Sigma) \pi_g$$
+
+## Logistic versus LDA
+
+Some remarks:
+
+-   Forming [logistic]{style="color: orangemain"} requires fewer
+    assumptions
+
+-   The MLEs under [logistic]{style="color: orangemain"} will be
+    undefined if the classes are perfectly separable
+
+-   If some entries in $X$ are qualitative, then the modeling
+    assumptions behind [LDA]{style="color: orangemain"} are suspect
+
+-   In practice, the two methods tend to give very similar results
+
+## Selected references
