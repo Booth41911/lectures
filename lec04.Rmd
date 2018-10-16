@@ -3,10 +3,10 @@ title: "Lecture 4"
 author: "DJM"
 date: "16 October 2018"
 output:
+  pdf_document: default
   slidy_presentation:
     css: http://mypage.iu.edu/~dajmcdon/teaching/djmRslidy.css
     font_adjustment: 0
-  pdf_document: default
 bibliography: booth-refs.bib
 ---
 
@@ -23,7 +23,7 @@ bibliography: booth-refs.bib
 \newcommand{\argmax}{\arg\max}
 \newcommand{\F}{\mathcal{F}}
 \newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
-\newcommand{\indicator}{\mathbbm{1}}
+\newcommand{\indicator}{\mathbf{1}}
 \renewcommand{\bar}{\overline}
 \renewcommand{\hat}{\widehat}
 \newcommand{\tr}[1]{\mbox{tr}(#1)}
@@ -92,7 +92,7 @@ The same constraints apply:
 In regression, we have $Y_i \in \mathbb{R}$ and use squared error loss
 
 
-Instead, let $Y \in \mathcal{G} = \{1,\ldots, G\}$
+Instead, let $Y \in \mathcal{K} = \{1,\ldots, K\}$
 
 (This is arbitrary, sometimes other numbers, such as $\{-1,1\}$ will be
 used)
@@ -101,19 +101,20 @@ used)
 We again make predictions $\hat{Y}$ based on $\mathcal{D}$
 
 
-Our loss function is now a $G\times G$ matrix $L$ with
+Our loss function is now a $K\times K$ matrix $L$ with
 
 -   zeros on the diagonals
--   $\ell(g,g')$ on the off diagonal ($g\neq g'$)
+-   $\ell(k,k')$ on the off diagonal ($k\neq k'$)
+
 
 ## How do we measure quality?
 
 Again, we appeal to risk
-$$R(\hat{g}) = \mathbb{E}_{Z} \ell_{\hat{g}}(Z)$$ If we use the law of
+$$R(g) = \mathbb{E}_{(X,Y)} \ell(Y,g(X))$$ If we use the law of
 total probability, this can be written
-$$R(\hat{g}) = \mathbb{E}_X \sum_{y=1}^G \ell_{\hat{g}}(Z = (y,X)) \mathbb{P}(Y = y | X)$$
+$$R(g) = \mathbb{E}_X \sum_{y=1}^K \ell(y,\; g(X)) \mathbb{P}(Y = y | X)$$
 This can be minimized point wise over $X$, to produce
-$$g_*(X) = \argmin_{g \in \mathcal{G}} \sum_{g=1}^G \ell_g(Z = (g,X)) \mathbb{P}(Y = y | X)$$
+$$g_*(X) = \argmin_{f \in \mathcal{G}} \sum_{y=1}^K \ell(y,g(X)) \mathbb{P}(Y = y | X)$$
 (This is the ~~Bayes' classifier~~. Also,
 $R(g_*)$ is the ~~Bayes' limit~~)
 
@@ -121,6 +122,8 @@ $R(g_*)$ is the ~~Bayes' limit~~)
 
 If we make specific choices for $\ell$, we can find $g_*$ exactly
 
+Define (for convenience)
+$$\ell_g(Z) = \ell(Y,g(X))$$ 
 
 As $Y$ takes only a few values, ~~zero-one~~
 prediction risk is natural
@@ -144,8 +147,8 @@ $\ell_f(Z) = (Y - f(X))^2$
 
 
 Then, the Bayes' rule is
-$$f_*(X) = \mathbb{E}[ Y | X] = \mathbb{P}(Y = 1 | X)$$ (using $f$ as it
-references squared error loss)
+$$f_*(X) = \mathbb{E}[ Y | X] = \mathbb{P}(Y = 1 | X)$$ 
+(note that $f_* \in [0,1]$)
 
 Hence, we achieve the same Bayes' rule/limit with squared error
 classification by discretizing the probability:
@@ -161,7 +164,8 @@ Let $\hat{g}(X) = \mathbf{1}(\hat{f}(X) > 1/2)$
 
 
 It can be shown that $$\begin{aligned}
-  &\mathbb{P}(Y \neq \hat{g}(X) | X) - \mathbb{P}(Y \neq g_*(X) | X) =  \\
+  &\mathbb{P}(Y \neq \hat{g}(X) | X) - \mathbb{P}(Y \neq g_*(X) | X)  \\
+  &= \cdots =\\
   & = 
 (2f_*(X) - 1)(\mathbf{1}(g_*(X) = 1) - \mathbf{1}(\hat{g}(X) = 1)) \\
 & = |2f_*(X) - 1|\mathbf{1}(g_*(X)\neq \hat{g}(X))  \\
@@ -313,7 +317,7 @@ ggplot(newdf, aes(X1,X2,color=y)) + geom_point() +
 dbs
 ```
 
-
+# Using Bayes Rule
 
 ## Bayes' rule-ian approach
 
@@ -462,7 +466,7 @@ g + stat_ellipse(type='norm') + # these are estimated, not the truth
 
 
 
-## Intuition
+## Intuition 
 
 ```{r,echo=FALSE}
 mu1 = c(1,2); mu0 = c(1,-1)
@@ -480,6 +484,9 @@ ggplot(df, aes(X1,X2,color=Y)) + geom_point() + scale_color_manual(values=c(blue
   geom_abline(intercept = -intercept/slope.vec[2], 
               slope = -slope.vec[1]/slope.vec[2], color=green)
 ```
+
+* Different $\mu_g$, $\Sigma$.
+
 ## Same one, but make n big
 
 ```{r,echo=FALSE}
@@ -549,8 +556,8 @@ of values looks like a line
 
 * Examine the joint distribution of $(X,y)$:  
 
-    - LDA $\prod_i f(x_i,y_i) = \underbrace{\prod_i f(X_i | y_i)}_{\textrm{Gaussian}}\underbrace{\prod_i f(y_i)}_{\textrm{Bernoulli}}$
-    - Logistic $\prod_i f(x_i,y_i) = \underbrace{\prod_i f(y_i | X_i)}_{\textrm{Logistic}}\underbrace{\prod_i f(X_i)}_{\textrm{Ignored}}$
+    - LDA:  $\prod_i f(x_i,y_i) = \underbrace{\prod_i f(X_i | y_i)}_{\textrm{Gaussian}}\underbrace{\prod_i f(y_i)}_{\textrm{Bernoulli}}$
+    - Logistic: $\prod_i f(x_i,y_i) = \underbrace{\prod_i f(y_i | X_i)}_{\textrm{Logistic}}\underbrace{\prod_i f(X_i)}_{\textrm{Ignored}}$
   
 * LDA estimates the joint, but Logistic estimates only the conditional distribution. But this is really all we need.
 
@@ -600,12 +607,11 @@ ggplot(df, aes(X1,X2,color=y)) + geom_point() + scale_color_brewer(palette = 'Se
 Returning to the assumption: $\Sigma_g = \Sigma$
 
 The assumption provides two benefits:
-
 -   Allows for estimation when $n$ __isn't__
     large compared with $Gp(p+1)/2$
 -   Lowers the variance of the procedure (but produces bias)
 
-    (This can be seen by the estimation of fewer parameters)
+(This can be seen by the estimation of fewer parameters)
 
 ## Regularizing LDA
 
@@ -776,6 +782,8 @@ coordinates"
 As an aside, this procedure is identical to __Fisher's discriminant
 analysis__ (when $L=1$)
 
+# Logit family
+
 ## Logistic regression
 
 Logistic regression for two classes simplifies to a likelihood:
@@ -802,13 +810,13 @@ We can use penalized likelihood techniques in the same way as we did
 before
 
 \vspace{.15in}
-This means maximizing (over $\beta_0,\beta$):
-$$\sum_{i=1}^n \left( Y_i(\beta_0 + \beta^{\top}X_i) -\log(1 + e^{\beta_0 + \beta^{\top} X_i})\right)  
-- \lambda (\alpha||\beta||_1+ (1-\alpha) ||\beta||_2^2)$$ (Don't
+This means minimizing (over $\beta_0,\beta$):
+$$\sum_{i=1}^n \left( - Y_i(\beta_0 + \beta^{\top}X_i) +\log\left(1 + \exp\left\{\beta_0 + \beta^{\top} X_i\right\}\right)\right)  
++ \lambda (\alpha\norm{\beta}_1+ (1-\alpha) \norm{\beta}_2^2)$$ (Don't
 penalize the intercept and do standardize the covariates)
 
 \vspace{.15in}
-This is the [logistic elastic net]{style="color: greenmain"}
+This is the __logistic elastic net__
 
 ## Sparse logistic regression: Software
 
@@ -824,6 +832,17 @@ Unfortunately, the computations are more difficult for path algorithms
 
 `glmpath` does quadratic approximations to the profiles, while still
 computing the exact points at which the active set changes
+
+If $G>2$, use multinomial logit
+```{r, eval=FALSE}
+cv.glmnet(x,y, family='multinomial')
+```
+or
+```{r, eval=FALSE}
+library(nnet)
+multinom(y~., data=df)
+```
+
 
 
 
