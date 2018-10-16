@@ -1,7 +1,7 @@
 ---
-title: "Lecture 2"
+title: "Lecture 4"
 author: "DJM"
-date: "2 October 2018"
+date: "16 October 2018"
 output:
   slidy_presentation:
     css: http://mypage.iu.edu/~dajmcdon/teaching/djmRslidy.css
@@ -393,15 +393,18 @@ Now, we must estimate $\mu_g$ and $\Sigma$. If we\...
 
 How would you classify a point with this data?
 
-<!--\centering
-![image](../figures/multivariateGaussianEllipseLDA.pdf){width="2.4in"}
--->
 
-\vspace{.15in}
+```{r, echo=FALSE}
+Sigma = matrix(c(2,.7,.7,1),2)
+xy = matrix(rnorm(300*2,sd=.2),ncol=2) %*% Sigma + rep(c(1,1,-3,2,-5,0),each=100)
+normals = tibble(g = rep(letters[1:3],each=100), x=xy[,1], y=xy[,2])
+ggplot(normals, aes(x=x,y=y,color=g)) + geom_point()
+```
+
+
 We can just classify an observation to the
-[closest]{style="color: orangemain"} mean $(\overline{X}_g)$
+__closest__ mean $(\overline{X}_g)$
 
-\vspace{.15in}
 What do we mean by close? (Need to define distance)
 
 ## LDA intuition
@@ -419,53 +422,99 @@ ignoring the covariance) would amount to
  \argmin_g {-X^{\top}\overline{X}_g} +  {\frac{1}{2}\overline{X}_g^{\top}\overline{X}_g} \\
  & \textrm{{compare this to:}} \\
 \hat{g} 
-& = \argmin_g \underbrace{ {X^{\top}\hat\Sigma_{\lambda}^{-1}\overline{X}_g} - {\frac{1}{2}\overline{X}_g^{\top}\hat{\Sigma}_{\lambda}^{-1} \overline{X}_g} }_{likelihood}+ \underbrace{\log(\hat\pi_g)}_{prior} \end{aligned}
+& = \argmin_g \underbrace{ {X^{\top}\hat\Sigma^{-1}\overline{X}_g} - {\frac{1}{2}\overline{X}_g^{\top}\hat{\Sigma}^{-1} \overline{X}_g} }_{likelihood}+ \underbrace{\log(\hat\pi_g)}_{prior} \end{aligned}
 \]
 
-\vspace{.15in}
-The difference is we weight the distance by $\hat\Sigma_{\lambda}^{-1}$
+
+The difference is we weight the distance by $\hat\Sigma^{-1}$
 and weight the class assignment by fraction of observations in each
 class.
 
 (Note: this generalization of Euclidean distance is called
-[Mahalanobis]{style="color: greenmain"} distance)
+__Mahalanobis__ distance)
 
 ## Intuition
 
-What if the data looked like this?
+```{r, echo=FALSE}
+library(mvtnorm)
+n = 100
+pi1 = 0.5
+n1 = floor(n*pi1); n0 = n-n1
+mu1 = c(1,2); mu0 = c(-1,-1)
+Sigma = 2*diag(2)
+X1 = rmvnorm(n1, mu1, Sigma) 
+X2 = rmvnorm(n0, mu0, Sigma)
+X = rbind(X1,X2)
+Y = factor(c(rep(1,n1),rep(0,n0)))
+df = data.frame(Y,X)
+```
+```{r,echo=FALSE}
+g <- ggplot(df, aes(X1,X2,color=Y)) + geom_point() + scale_color_manual(values=c(blue,red))
+Sinv = solve(Sigma)
+slope.vec = t(mu1-mu0) %*% Sinv
+intercept = 0.5*(t(mu0) %*% Sinv %*% mu0 - t(mu1) %*% Sinv %*% mu1)
+g + stat_ellipse(type='norm') + # these are estimated, not the truth
+  geom_abline(intercept = -intercept/slope.vec[2], 
+              slope = -slope.vec[1]/slope.vec[2], color=green)
+```
 
-<!--\centering
-![image](../figures/LDAmotivation1.pdf){width="2.2in"}
-![image](../figures/LDAmotivationDecisionBoundary1.pdf){width="2.2in"}
--->
+* Note: here there is a single $\Sigma$, but I don't know how to plot ellipses in `ggplot`. So these are estimated.
+
+
 
 ## Intuition
 
-Or this?
+```{r,echo=FALSE}
+mu1 = c(1,2); mu0 = c(1,-1)
+Sigma = 2*matrix(c(1,-.5,-.5,1),2)
+X1 = rmvnorm(n1, mu1, Sigma) 
+X2 = rmvnorm(n0, mu0, Sigma)
+X = rbind(X1,X2)
+Y = factor(c(rep(1,n1),rep(0,n0)))
+df = data.frame(Y,X)
+Sinv = solve(Sigma)
+slope.vec = t(mu1-mu0) %*% Sinv
+intercept = 0.5*(t(mu0) %*% Sinv %*% mu0 - t(mu1) %*% Sinv %*% mu1)
+ggplot(df, aes(X1,X2,color=Y)) + geom_point() + scale_color_manual(values=c(blue,red)) +
+  stat_ellipse(type='norm') + 
+  geom_abline(intercept = -intercept/slope.vec[2], 
+              slope = -slope.vec[1]/slope.vec[2], color=green)
+```
+## Same one, but make n big
 
-<!--\centering
-![image](../figures/LDAmotivation2.pdf){width="2.2in"}
-![image](../figures/LDAmotivationDecisionBoundary2.pdf){width="2.2in"}
--->
+```{r,echo=FALSE}
+n1=500; n0=500
+X1 = rmvnorm(n1, mu1, Sigma) 
+X2 = rmvnorm(n0, mu0, Sigma)
+X = rbind(X1,X2)
+Y = factor(c(rep(1,n1),rep(0,n0)))
+df = data.frame(Y,X)
+Sinv = solve(Sigma)
+slope.vec = t(mu1-mu0) %*% Sinv
+intercept = 0.5*(t(mu0) %*% Sinv %*% mu0 - t(mu1) %*% Sinv %*% mu1)
+ggplot(df, aes(X1,X2,color=Y)) + geom_point() + scale_color_manual(values=c(blue,red)) +
+  stat_ellipse(type='norm') + 
+  geom_abline(intercept = -intercept/slope.vec[2], 
+              slope = -slope.vec[1]/slope.vec[2], color=green)
+```
 
-## Intuition
+## Same one, but change P(Y=1)
 
-How about this?
-
-<!--\centering
-![image](../figures/LDAmotivation3.pdf){width="2.2in"}
-![image](../figures/LDAmotivationDecisionBoundary3.pdf){width="2.2in"}
--->
-
-## Intuition
-
-What about now?
-
-<!--\centering
-![image](../figures/LDAmotivation4.pdf){width="2.2in"}
-![image](../figures/LDAmotivationDecisionBoundary4.pdf){width="2.2in"}
--->
-
+```{r,echo=FALSE}
+n1=250; n0=50
+X1 = rmvnorm(n1, mu1, Sigma) 
+X2 = rmvnorm(n0, mu0, Sigma)
+X = rbind(X1,X2)
+y = factor(c(rep(1,n1),rep(0,n0)))
+df = data.frame(y,X)
+Sinv = solve(Sigma)
+slope.vec = t(mu1-mu0) %*% Sinv
+intercept = 0.5*(t(mu0) %*% Sinv %*% mu0 - t(mu1) %*% Sinv %*% mu1) + log(.75) - log(.25)
+ggplot(df, aes(X1,X2,color=y)) + geom_point() + scale_color_manual(values=c(blue,red)) +
+  stat_ellipse(type='norm') + 
+  geom_abline(intercept = -intercept/slope.vec[2], 
+              slope = -slope.vec[1]/slope.vec[2], color=green)
+```
 
 ## Performance of LDA
 
@@ -481,227 +530,163 @@ The quality of the classifier produced by LDA depends on two things:
     (That is: $X| Y= g$ is a Gaussian with mean $\mu_g$ and variance
     $\Sigma$)
 
-\vspace{.15in}
-[[Recall:]{style="color: greenmain"}]{.smallcaps} The [decision
-boundary]{style="color: orangemain"} of a classifier are the values of
+__Recall:__ The _decision
+boundary_ of a classifier are the values of
 $X$ such that the classifier is [indifferent]{style="color: orangemain"}
 between two (or more) levels of $Y$
 
-\vspace{.15in}
-A [linear]{style="color: orangemain"} decision boundary is when this set
+A _linear_ decision boundary is when this set
 of values looks like a line
 
-## LDA: under correct assumptions
+## Comparing LDA and Logistic regression
 
-<!--\centering
-![For $n_g = 10$](../figures/LDAbayesRuleEqualCovs10.pdf){width="3in"}
--->
+* Both are linear in $x$:  
 
-## LDA: under correct assumptions
+    - LDA$\longrightarrow \alpha_0 + \alpha_1^\top x$ 
+    - Logit$\longrightarrow \beta_0 + \beta_1^\top x$.
 
-<!--\centering
-![For $n_g = 100$](../figures/LDAbayesRuleEqualCovs100.pdf){width="3in"}
--->
+* But the parameters are estimated differently.
 
-## LDA: under correct assumptions
+* Examine the joint distribution of $(X,y)$:  
 
-<!--\centering
-![For
-$n_g = 1000$](../figures/LDAbayesRuleEqualCovs1000.pdf){width="3in"}
--->
+    - LDA $\prod_i f(x_i,y_i) = \underbrace{\prod_i f(X_i | y_i)}_{\textrm{Gaussian}}\underbrace{\prod_i f(y_i)}_{\textrm{Bernoulli}}$
+    - Logistic $\prod_i f(x_i,y_i) = \underbrace{\prod_i f(y_i | X_i)}_{\textrm{Logistic}}\underbrace{\prod_i f(X_i)}_{\textrm{Ignored}}$
+  
+* LDA estimates the joint, but Logistic estimates only the conditional distribution. But this is really all we need.
 
-## LDA: mildly incorrect assumptions
+* So logistic requires fewer assumptions.
 
-<!--\centering
-![For
-$n_g = 10$](../figures/LDAbayesRuleMildDiffCovs10.pdf){width="3in"}
--->
+* But if the two classes are perfectly separable, logistic crashes (and the MLE is undefined)
 
-## LDA: mildly incorrect assumptions
+* LDA works even if the conditional isn't normal, but works poorly if any X is qualitative
 
-<!--\centering
-![For
-$n_g = 100$](../figures/LDAbayesRuleMildDiffCovs100.pdf){width="3in"}
--->
 
-## LDA: mildly incorrect assumptions
+## Comparison
 
-<!--\centering
-![For
-$n_g = 1000$](../figures/LDAbayesRuleMildDiffCovs1000.pdf){width="3in"}
--->
+```{r, echo=FALSE}
+lda.disc <- function(fit,df){
+  pi0 = fit$prior[1]
+  pi1 = fit$prior[2]
+  mu0 = fit$means[1,]
+  mu1 = fit$means[2,]
+  S = pi0*cov(filter(df,y==0)[,-1]) + pi1*cov(filter(df,y==1)[,-1])
+  Sinv = solve(S)
+  slope.vec = t(mu1-mu0) %*% Sinv
+  intercept = 0.5*(t(mu0) %*% Sinv %*% mu0 - t(mu1) %*% Sinv %*% mu1) + log(.75) - log(.25)
+  int = -intercept/slope.vec[2]
+  sl = -slope.vec[1]/slope.vec[2]
+  return(data.frame(intercept=int,slope=sl))
+}
+```
 
-## LDA: very incorrect assumptions
 
-<!--\centering
-![For $n_g = 10$](../figures/LDAbayesRuleDiffCovs10.pdf){width="3in"}
--->
+```{r, echo=FALSE}
+library(MASS)
+lda.fit = lda(y~X1+X2, data=df) 
+sl.int = lda.disc(lda.fit,df)
+log.bd = decision.boundary(df)
+truth = data.frame(intercept=-intercept/slope.vec[2], slope=-slope.vec[1]/slope.vec[2])
+dfa = rbind(sl.int,log.bd,truth)
+dfa$discriminant = c('lda','logistic','truth')
+ggplot(df, aes(X1,X2,color=y)) + geom_point() + scale_color_brewer(palette = 'Set1')+
+  stat_ellipse(type='norm') + 
+  geom_abline(mapping=aes(intercept=intercept, slope=slope,color=discriminant),data=dfa)
+```
 
-## LDA: very incorrect assumptions
-
-<!--\centering
-![For $n_g = 100$](../figures/LDAbayesRuleDIffCovs100.pdf){width="3in"}
--->
-
-## LDA: very incorrect assumptions
-
-<!--\centering
-![For
-$n_g = 1000$](../figures/LDAbayesRuleDiffCovs1000.pdf){width="3in"}
--->
+# LDA family
 
 ## The LDA variance assumption
 
 Returning to the assumption: $\Sigma_g = \Sigma$
 
-\vspace{.15in}
 The assumption provides two benefits:
 
--   Allows for estimation when $n$ [isn't]{style="color: orangemain"}
+-   Allows for estimation when $n$ __isn't__
     large compared with $Gp(p+1)/2$
-
 -   Lowers the variance of the procedure (but produces bias)
 
     (This can be seen by the estimation of fewer parameters)
 
 ## Regularizing LDA
 
--   regularize these 'plug-in' estimates, we can form [regularized
-    discriminant analysis]{style="color: orangemain"} (Friedman (1989)).
-    This could be (for $\lambda \in [0,1]$):
+-   Penalize the 'plug-in' estimates [@Friedman1989]:  
+    Let $\lambda \in [0,1]$,
     $$\hat{\Sigma}_{\lambda} = \lambda \hat{\Sigma} + (1-\lambda) \hat\sigma^2 I$$
+    
+- Nearest Shrunken Centroids:  
+  Take $\hat\Sigma=\hat\sigma^2 I$.
+  
+- Regularized Optimal Affine Discriminant (ROAD) [@FanFeng2012]:  
+  Solve $$\argmin_v v'Sv + \lambda\norm{v}_1,\quad\quad \textrm{s.t. } v'(\hat{\mu}_1-\hat{\mu}_2)=1.$$ The intuition is that the discriminant
+  $$\hat\Sigma^{-1}(\hat{\mu}_1-\hat{\mu}_2)$$ now depends only on a few features. This one works really well in high-dimensions.
+  
+# QDA
 
- 
 
-## The LDA variance assumption
+## QDA
 
-However, when $n$ is large compared with $Gp(p+1)/2$
+* Start like LDA, but let $\Sigma_1 \neq \Sigma_0$.
 
-(Say, $\min n_g \geq 40 p(p+1)/2$)
+* This gives a "quadratic" decision boundary (it's a curve).
 
-\vspace{.15in}
-Then the induced bias can outweigh the variance
+* If we have many columns in $X$ ($p$)
 
-(This is hard to determine. Usually compare the prediction error on test
-set)
+    - Logistic estimates $p+1$ parameters
+    - LDA estimates $2p + p(p+1)/2 + 1$
+    - QDA estimates $2p + p(p+1) + 1$
+  
+* If $p=50$,
 
-\vspace{.15in}
-We relax the assumption and let $X | Y=g$ have
+    - Logistic: 51
+    - LDA: 1376 (estimating the discriminant is only 51)
+    - QDA: 2651
+  
+* QDA doesn't get used much: there are better nonlinear versions with way "fewer" parameters (SVMs)
 
--   mean $\mu_g$
+## LDA/QDA in `R`
 
--   variance $\Sigma_{{g}}$
+```{r qda-pred, echo=TRUE}
+# Generate data
+n1=50; n0=50
+Sigma1 = matrix(c(2,.8,.8,1),2)
+Sigma0 = matrix(c(1,-.5,-.5,2),2)
+X1 = rmvnorm(n1, mu1, Sigma1) 
+X2 = rmvnorm(n0, mu0, Sigma0)
+X = rbind(X1,X2)
+y = factor(c(rep(1,n1),rep(0,n0)))
+df = data.frame(y,X)
+library(MASS)
+qda.fit = qda(y~X1+X2, data=df)
+lda.fit = lda(y~X1+X2, data=df)
+```
 
-\vspace{.15in}
-This makes the decision boundary [quadratic]{style="color: orangemain"}
 
-(Instead of linear)
+## LDA/QDA decision boundaries
 
-# Quadratic Discriminant Analysis
+```{r, echo=FALSE}
+pred.grid = expand.grid(X1=seq(min(df$X1),max(df$X1),len=100),
+                        X2=seq(min(df$X2),max(df$X2),len=100))
+pred.grid$qda = predict(qda.fit, newdata=pred.grid)$class
+pred.grid$lda = predict(lda.fit, newdata=pred.grid)$class
+pg = gather(pred.grid,key='key',value='predictions',-c(X1,X2))
+ggplot(pg, aes(X1,X2)) + geom_raster(aes(fill=predictions)) +
+  facet_wrap(~key) + scale_fill_brewer()+
+  geom_point(data=df,mapping=aes(X1,X2,color=y)) +
+  scale_color_brewer(palette = 'Set1')
+```
 
-## Quadratic discriminant analysis
-
-If we drop the assumption regarding equal covariances, we get:
-$$\delta_g(X) = \log \pi_g + X^{\top} \Sigma_g^{-1}\mu_g  - \mu_{g}^{\top} \Sigma_g^{-1} \mu_g /2 - \log | \Sigma_g|/2$$
-($\Sigma_g$ can be estimated by the sample covariance of the
-observations in group $g$)
-
-This produces [quadratic discriminant
-analysis]{style="color: greenmain"} (QDA)
-
-\vspace{.15in}
-In my experience, QDA works well if $n$ is large relative to $p$
-
-(However, it isn't often computable in practice; too many parameters)
-
-We can augment regularized discriminant analysis to shrink each
-$\hat{\Sigma}_g$ to $\hat{\Sigma}$ or even to $\hat{\Sigma}_\lambda$
-$$\hat{\Sigma}_{g,(\gamma,\lambda)}  = \gamma\hat{\Sigma}_g + (1-\gamma)\hat{\Sigma}_{\lambda}$$
-(To the best of my knowledge, little is formally known about this
-procedure. See Guo et al. (2006) for an empirical comparison )
-
-## QDA: More flexibility than needed
-
-<!--\centering
-![For $n_g = 100$. Note linear Bayes' rule, nonlinear QDA decision
-boundary](../figures/QDAbayesRuleEqualCovs100.pdf){width="2.8in"}
--->
-
-## QDA: More flexibility than needed
-
-<!--\centering
-![For $n_g = 300$. Note linear Bayes' rule, nonlinear QDA decision
-boundary](../figures/QDAbayesRuleEqualCovs300.pdf){width="2.8in"}
--->
-
-## QDA: More flexibility than needed
-
-<!--\centering
-![For $n_g = 2000$. Note linear Bayes' rule. The nonlinear QDA decision
-boundary has converged to Bayes'
-rule](../figures/QDAbayesRuleEqualCovs2000.pdf){width="2.8in"}
--->
-
-## QDA: Different $\Sigma_g$ assumption needed
-
-<!--\centering
-![For $n_g = 100$. Note [nonlinear]{style="color: orangemain"} Bayes'
-rule, nonlinear QDA decision
-boundary](../figures/QDAbayesRuleDiffCovs100.pdf){width="2.8in"}
--->
-
-## QDA: Different $\Sigma_g$ assumption needed
-
-<!--\centering
-![For $n_g = 300$. Note [nonlinear]{style="color: orangemain"} Bayes'
-rule, nonlinear QDA decision
-boundary](../figures/QDAbayesRuleDIffCovs300.pdf){width="2.8in"}
--->
-
-## QDA: Different $\Sigma_g$ assumption needed
-
-<!--\centering
-![For $n_g = 2000$. Note [nonlinear]{style="color: orangemain"} Bayes'
-rule, nonlinear QDA decision
-boundary](../figures/QDAbayesRuleDiffCovs2000.pdf){width="2.8in"}
--->
-
-## LDA vs. QDA: under correct assumptions
-
-<!-- \centering
-![For
-$n_g = 100$](../figures/LDAbayesRuleEqualCovs100.pdf "fig:"){width="2.3in"}
-![For
-$n_g = 100$](../figures/QDAbayesRuleEqualCovs100.pdf "fig:"){width="2.3in"}
--->
-
-## LDA vs. QDA: very incorrect assumptions
-
-<!-- centering
-![LDA $n_g = 1000$, QDA
-$n_g = 2000$](../figures/LDAbayesRuleDiffCovs1000.pdf "fig:"){width="2.3in"}
-![LDA $n_g = 1000$, QDA
-$n_g = 2000$](../figures/QDAbayesRuleDiffCovs2000.pdf "fig:"){width="2.3in"}
--->
-
-## LDA in [R]{style="color: brick"}
-
-We can do this readily in [R]{style="color: brick"}
-
-[Reduced rank LDA]{style="color: greenmain"}
 
 ## Reduced rank LDA
 
-Part of the popularity of LDA is that it provides [dimension
-reduction]{style="color: orangemain"} as well
+Part of the popularity of LDA is that it provides dimension
+reduction as well
 
-\vspace{.15in}
+
 The $G$ class centroids $\mu_g$ must all lie in an affine subspace of
 dimension $G-1$ (presuming $G < p$)
 
 (Let $\mathcal{H}_{G-1}$ be this subspace)
 
-\vspace{.15in}
 If $G$ is much less than $p$, this will be a substantial drop in
 dimension
 
@@ -716,13 +701,13 @@ $$\begin{aligned}
 \log \pi_g + (X - \mu_g)^{\top} \Sigma^{-1}(X - \mu_g)/2 \end{aligned}$$
 So,
 
-1.  [[Spectrum:]{style="color: greenmain"}]{.smallcaps} Form
+1.  ~~Spectrum:~~ Form
     $\hat{\Sigma}_{\lambda} = U D U^{\top}$
 
-2.  [[Sphere:]{style="color: greenmain"}]{.smallcaps} Rewrite your data
+2.  ~~Sphere:~~ Rewrite your data
     as $\tilde{X} \leftarrow D^{-1/2} U^{\top} X$
 
-3.  [[Assign:]{style="color: greenmain"}]{.smallcaps} Classify to the
+3.  ~~Assign:~~ Classify to the
     closest mean in transformed space
 
     (Penalizing by estimate of prior probability)
@@ -732,52 +717,49 @@ So,
 We can ignore any information orthogonal to $\mathcal{H}_{G-1}$, as it
 contributes to each class equally (in the sphered space)
 
-\vspace{.15in}
 So, project $\tilde{X}$ onto $\mathcal{H}_{G-1}$ and make distance
 computations there
 
-\vspace{.15in}
 When $G = 2,3$, this means we can plot the projection onto
 $\mathcal{H}_{G-1}$ with no loss of information about the LDA solution
 
-\vspace{.15in}
+
 If $G > 3$, then we may wish to project onto a
-[reduced]{style="color: orangemain"} space
+further reduced space
 $\mathcal{H}_{L} \subset \mathcal{H}_{G-1}$
 
-\vspace{.15in}
 We'd like $\mathcal{H}_L$ to maintain the most amount of information
 possible for assigning to classes
 
 ## Reduced rank LDA
 
-This can be done via the following procedure
+This can be done via the following procedure 
 
-1.  [[Centroids:]{style="color: greenmain"}]{.smallcaps} Compute
+1.  ~~Centroids:~~ Compute
     $G \times p$ matrix $M$ of class centroids
 
-2.  [[Covariance:]{style="color: greenmain"}]{.smallcaps} Form
+2.  ~~Covariance:~~ Form
     $\hat\Sigma$ as the common covariance matrix
 
-3.  [[Sphere:]{style="color: greenmain"}]{.smallcaps}
+3.  ~~Sphere:~~
     $\tilde{M} = M \hat\Sigma^{-1/2}$
 
-4.  [[Between Covariance:]{style="color: greenmain"}]{.smallcaps} Find
+4.  ~~Between Covariance:~~ Find
     covariance matrix for $\tilde{M}$, call it $B$
 
-5.  [[Spectrum]{style="color: greenmain"}]{.smallcaps} Compute
+5.  ~~Spectrum:~~ Compute
     $B = V S V^{\top}$
 
-\vspace{.15in}
+
 Now, span$(V_L) = \mathcal{H}_L$
 
-\vspace{.15in}
+
 Also, the coordinates of the data in this space are
 $Z_k = v_k^{\top} \hat\Sigma^{-1/2}X$
 
-\vspace{.15in}
-These derived variables are commonly called [canonical
-coordinates]{style="color: greenmain"}
+
+These derived variables are commonly called "canonical
+coordinates"
 
 ## Reduced rank LDA: Summary
 
@@ -790,9 +772,9 @@ coordinates]{style="color: greenmain"}
 -   If this isn't small enough, we can do 'optimal' dimension reduction
     to $\mathcal{H}_L$
 
-\vspace{.15in}
-As an aside, this procedure is identical to [Fisher's discriminant
-analysis]{style="color: greenmain"}
+
+As an aside, this procedure is identical to __Fisher's discriminant
+analysis__ (when $L=1$)
 
 ## Logistic regression
 
@@ -830,78 +812,33 @@ This is the [logistic elastic net]{style="color: greenmain"}
 
 ## Sparse logistic regression: Software
 
-Using the [R]{style="color: brick"} package
-[glmnet]{style="color: brick"} finds the minimum CV solution over a grid
-of $\lambda$ values
+`glmnet` works essentially as before:
+```{r, eval=FALSE}
+cv.glmnet(x,y, family='binomial')
+```
 
-\vspace{.15in}
+
 Unfortunately, the computations are more difficult for path algorithms
-(such as the [lars]{style="color: brick"} package) due to the
-coefficient profiles being only piecewise smooth
+(such as the `lars` package) due to the coefficient profiles being only piecewise smooth (rather than piecewise linear)
 
-\vspace{.15in}
-[glmpath]{style="color: brick"} is an [R]{style="color: brick"} package
-that does quadratic approximations to the profiles, while still
+
+`glmpath` does quadratic approximations to the profiles, while still
 computing the exact points at which the active set changes
 
-\vspace{.15in}
-Park, Hastie (2007).  It is necessary to set a `step' size argument for the approximation.
 
 
-## Logistic versus LDA
 
-The log posterior odds via the Gaussian likelihood
-([LDA]{style="color: orangemain"}) for class $g$ versus $G$ are
-$$\begin{aligned}
-\log \frac{ \mathbb{P}(Y = g | X)}{\mathbb{P}(Y = G | X) } 
-& =
-{\log \frac{\pi_g}{\pi_{G}} - (\mu_{g} + \mu_{G})^{\top} \Sigma^{-1} (\mu_g - \mu_{G})/2 }  \\
-& \qquad +  X^{\top} {\Sigma^{-1}(\mu_g - \mu_{G})} \\
-& = {\alpha_{g,0} }+ {\alpha_g}^{\top}X\end{aligned}$$
+## Final words: Logistic versus LDA
 
-\vspace{.15in}
-Likewise, multi class [logistic]{style="color: orangemain"} follows (for
-$g = 1,\ldots,G-1$): $$\begin{aligned}
-\log \frac{ \mathbb{P}(Y = g | X)}{\mathbb{P}(Y = G | X) } 
-& =
-{\beta_{g,0}} + {\beta_{g}}^{\top}X\end{aligned}$$
-(The choice of base class $G$ is arbitrary)
 
-\vspace{.15in}
-[[They both specify the log-odds as linear
-models!]{style="color: greenmain"}]{.smallcaps}
-
-## Logistic versus LDA
-
-We can write the joint distribution of $Y$ and $X$ as
-$$\mathbb{P}(X,Y) = \mathbb{P}(Y|X)\mathbb{P}(X)$$ The previous slide
-shows that $\mathbb{P}(Y|X)$ is the same for both methods:
-$$\mathbb{P}(Y = g | X)
- = 
- \frac{e^{\alpha_{g,0} + \alpha_{g}^{\top}X}}{1 + \sum_{k = 1}^{G-1} e^{\alpha_{k,0} + \alpha_{k}^{\top}X}}$$
-
--   Logistic regression leaves $\mathbb{P}(X)$ arbitrary, and implicitly
-    estimates it with the empirical measure
-
-    (This could be interpreted as a
-    [frequentist]{style="color: orangemain"} approach, where we are
-    maximizing the likelihood only and using the improper uniform prior)
-
--   LDA models
-    $$\mathbb{P}(X,Y=g) = \mathbb{P}(X | Y=g) \mathbb{P}(Y=g) = N(X;\mu_g,\Sigma) \pi_g$$
-
-## Logistic versus LDA
-
-Some remarks:
-
--   Forming [logistic]{style="color: orangemain"} requires fewer
+-   Forming __logistic__ requires fewer
     assumptions
 
--   The MLEs under [logistic]{style="color: orangemain"} will be
+-   The MLEs under __logistic__ will be
     undefined if the classes are perfectly separable
 
 -   If some entries in $X$ are qualitative, then the modeling
-    assumptions behind [LDA]{style="color: orangemain"} are suspect
+    assumptions behind __LDA__ are suspect
 
 -   In practice, the two methods tend to give very similar results
 
