@@ -3,10 +3,10 @@ title: "Lecture 5"
 author: "DJM"
 date: "23 October 2018"
 output:
-  pdf_document: default
   slidy_presentation:
     css: http://mypage.iu.edu/~dajmcdon/teaching/djmRslidy.css
     font_adjustment: 0
+  pdf_document: default
 bibliography: booth-refs.bib
 ---
 
@@ -48,13 +48,13 @@ colvec = c(green,blue,red,orange)
     - E.g. Lasso performs model selection by setting many $\hat\beta=0$
 * I define "model selection" more broadly
 * I mean "making any necessary decisions to arrive at a final model"
-* Sometimes this means "choosing predictors""
+* Sometimes this means "choosing predictors"
 * It could also mean "selecting a tuning parameter"
 * Or "deciding whether to use LASSO or Ridge" (and picking tuning parameters)
 * Recall Lecture 2: "A statistical model $\mathcal{P}$ is a collection of 
-probability
+probability distributions"
 * Model selection means "choose $\mathcal{P}$"
-distributions or densities." 
+ 
 
 ## My pet peeve
 
@@ -91,7 +91,7 @@ R_n(f) := \Expect{L(Y,f(X))} = \Expect{\Expect{L(Y,f(X)) \given \mathcal{D}}}
 2. Characterizing the out-of-sample performance of the chosen model.
 
 * I am not generally aware of other methods of accomplishing (1).
-* You could avoid making a choice (Chapter 8), or you could use a procedure that makes the choice "automatically"
+* You could avoid making a choice (Chapter 8), or you could use a procedure that makes the choice "automagically"
 * The method you choose to estimate risk will have large implications for both 1 and 2.
 
 ## A model selection picture
@@ -317,7 +317,7 @@ For me, thinking of $\hat{R}_n$ as
 overly optimistic and correcting for that
 optimism is conceptually appealing
 
-We need to also discuss __information criteria__.
+An alternative approach is to discuss __information criteria__.
 
 In this case one forms a (pseudo)-metric on probability measures.
 
@@ -358,11 +358,11 @@ KL(f,g) & = \int \log\left( \frac{f(y)}{g(y)} \right)f(y) dy \\
 -\mathbb{E}_f [\log (g(Y))] \end{aligned}$$
 
 This gives us a sense of the __loss__ incurred
-by using $g$ instead of $f$.
+by (incorrectly) using $g$ instead of $f$.
 
 * KL is not symmetric: $KL(f,g) \neq KL(g,f)$, so it's not a distance, but it is non-negative and satisfies the triangle inequality.
 
-Usually, $g$ will depend on some parameters, call them $\theta$
+Usually, $f,\ g$ will depend on some parameters, call them $\theta$
 
 
 ## KL example
@@ -394,7 +394,8 @@ If you maximize the likelihood for a finite dimensional parameter vector $\theta
 * This is AIC (originally "an information criterion", now "Akaike's information criterion").
 * Choose the model with smallest AIC
 * Often multiplied by 2 "for historical reasons". Ocassionally, given as the negative of this "to be extra annoying".
-* Your estimator for $\theta$ needs to be the MLE. $p$ includes all estimated parameters.
+* Your estimator for $\theta$ needs to be the MLE. 
+* $p$ includes all estimated parameters.
 
 ## Back to the OLS example
 
@@ -468,13 +469,11 @@ Suppose $Y_i\sim N(\mu_i,\sigma^2)$ and suppose $f$ is weakly differentiable. Th
 \[
 \frac{1}{\sigma^2} \sum_{i=1}^n\Cov{Y_i}{\hat{f}_i(Y)} = \Expect{\sum_{i=1}^n \frac{\partial f_i}{\partial y_i} \hat{f}(Y)}.
 \]
-
 * Note: Here I'm writing $\hat{f}$ as a function of $Y$ rather than $x$. 
 * This gives "Stein's Unbiased Risk Estimator"
 \[
 SURE = \hat{R}_n(\hat{f}) + 2\sigma^2 \sum_{i=1}^n \frac{\partial f_i}{\partial y_i} \hat{f}(Y) - n\sigma^2.
 \]
-
 * If $f(Y) = HY$ is linear, we're back to AIC (variance known case)
 * If $\sigma^2$ is unknown, may not be unbiased anymore. May not care.
 
@@ -483,7 +482,7 @@ SURE = \hat{R}_n(\hat{f}) + 2\sigma^2 \sum_{i=1}^n \frac{\partial f_i}{\partial 
 ## What is Cross Validation
 
 - Cross validation
-- This is another way or estimating the prediction risk.
+- This is another way of estimating the prediction risk.
 - Why?
 
 To recap:
@@ -546,7 +545,7 @@ L(Y_i - \widehat{f}^{(i)}(X_i))
 
 ## Problems with LOO-CV
 
-1. Each held out set is small $(n=1)$. Therefore, the variance of my predictions is high.
+1. Each held out set is small $(n=1)$. Therefore, the variance of each individual prediction is high.
 2. Since each held out set is small, the training sets overlap. This is bad. 
     * Usually, averaging reduces variance:
     \[
@@ -725,7 +724,7 @@ text(2,1.5,'Testing data',cex=3,col=2)
 
 ## Comparison
 
-* LOO-CV and AIC are asymptotically equivalent ($n\rightarrow \infty$, $p<n$), [@Stone1977]
+* LOO-CV and AIC are asymptotically equivalent $p<n$, [@Stone1977]
 * Properties of AIC/BIC in high dimensions are not well understood.
 * In low dimensions, AIC is minimax optimal for the prediction risk [@YangBarron1998]
 * CV is consistent for the prediction risk [@Dudoit2005]
@@ -753,7 +752,7 @@ text(2,1.5,'Testing data',cex=3,col=2)
 n = 30; p = 150
 sigma = c(.5, 1, 1.5, 5)
 beta = c(1, 0, ..., 0)
-Y = X %*% beta + sigma * rnorm(n)
+Y = X %*% beta + sigma * rnorm(n, sd=sigma)
 ```
 
 ![](gfx/example2gg.jpg)
@@ -764,7 +763,7 @@ Y = X %*% beta + sigma * rnorm(n)
 ## What if we don't want to choose?
 
 1. Choose a risk estimator $\hat{R}$
-2. Calculate weights $p_i = \exp{-\hat{R}(\textrm{Model}_i)}$
+2. Calculate weights $p_i = \exp\left\{-\hat{R}(\textrm{Model}_i)\right\}$
 3. Create final estimator $\hat{f} = \sum_{\textrm{models}} \frac{p_i}{\sum p_i} \hat{f}_i$.
 
 * If $\hat{R}$ is BIC, this is (poor-man's) Bayesian Model Averaging.
