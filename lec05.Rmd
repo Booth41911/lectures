@@ -3,10 +3,10 @@ title: "Lecture 5"
 author: "DJM"
 date: "23 October 2018"
 output:
+  pdf_document: default
   slidy_presentation:
     css: http://mypage.iu.edu/~dajmcdon/teaching/djmRslidy.css
     font_adjustment: 0
-  pdf_document: default
 bibliography: booth-refs.bib
 ---
 
@@ -489,14 +489,14 @@ SURE = \hat{R}_n(\hat{f}) + 2\sigma^2 \sum_{i=1}^n \frac{\partial f_i}{\partial 
 To recap:
   
    \[
-  R_n(\widehat{f}) = \E[\ell(Y,\widehat{f}(X))]
+  R_n(\widehat{f}) = \E[L(Y,\widehat{f}(X))]
   \]
   where the expectation is taken over the new data point $(Y,X)$
   and $\mathcal{D}_n$ (everything that is random).
   
 We saw one estimator of $R_n$: 
 \[
-\widehat{R}_n(\widehat{f}) = \sum_{i=1}^n \ell(Y_i,\widehat{f}(X_i)).
+\widehat{R}_n(\widehat{f}) = \sum_{i=1}^n L(Y_i,\widehat{f}(X_i)).
 \]
 
 This is the training error. It is a __BAD__ estimator because it is often optimistic.
@@ -521,7 +521,7 @@ This is the training error. It is a __BAD__ estimator because it is often optimi
 * Then we test our prediction:
 
 \[
-  \widetilde{R}_1(\widehat{f}^{(1)}) = \ell(Y_1, \widehat{f}^{(1)}(X_1)).
+  \widetilde{R}_1(\widehat{f}^{(1)}) = L(Y_1, \widehat{f}^{(1)}(X_1)).
 \]
 
 * But that was only one data point $(Y_1, X_1)$. Why stop there?
@@ -530,7 +530,7 @@ This is the training error. It is a __BAD__ estimator because it is often optimi
 without using it, then
 
 \[
-  \widetilde{R}_2(\widehat{f}^{(2)}) = \ell(Y_2, \widehat{f}^{(2)}(X_2)).
+  \widetilde{R}_2(\widehat{f}^{(2)}) = L(Y_2, \widehat{f}^{(2)}(X_2)).
 \]
 
 ## Keep going
@@ -539,8 +539,8 @@ without using it, then
 * And then average them! (Averages are good)
 * In the end we get
 \[
-\mbox{LOO-CV} = \sum_{i=1}^n \widetilde{R}_i(\widehat{f}^{(i)}) = \sum_{i=1}^n 
-\ell(Y_i - \widehat{f}^{(i)}(X_i))
+\mbox{LOO-CV} = \frac{1}{n}\sum_{i=1}^n \widetilde{R}_i(\widehat{f}^{(i)}) = \frac{1}{n}\sum_{i=1}^n 
+L(Y_i - \widehat{f}^{(i)}(X_i))
 \]
 * This is leave-one-out cross validation
 
@@ -563,6 +563,77 @@ without using it, then
 3. We have to estimate this model $n$ times.
     * There is an exception to this one. More on that in a minute.
     
+## LOO-CV with linear smoothers
+
+Suppose $\hat{Y} = HY$ and $L(a,b) = (a-b)^2$.
+
+* After much tedious algebra, one can show that
+\[
+\frac{1}{n}\sum_{i=1}^n \widetilde{R}_i(\widehat{f}^{(i)}) = \frac{1}{n} \sum_{i=1}^n 
+L(Y_i - \widehat{f}^{(i)}(X_i)) = \frac{1}{n} \sum_{i=1}^n 
+\frac{(Y_i - \widehat{f}(X_i))^2}{(1-H_{ii})^2}.
+\]
+
+* This means we only need to fit the model __once__ rather than $n$ times
+
+* This also suggests how to demonstrate that CV and AIC are asymptotically equivalent.
+
+* Suppose $(1-H_{ii}) \approx (1-h) \forall i$. Then,
+\[
+\log(\textrm{LOO-CV}) = \log(\hat{R}_n) - \log((1-h)^2)
+\]
+
+* As $n$ gets large ($p$-fixed), $h\approx p/n$, and $\log(1-x)\approx x$ when $x$ is small
+\[
+\Rightarrow -\log((1-h)^2) \approx 2p/n
+\]
+just like AIC.
+
+## Tedious algebra
+
+__Lemma__ (Sherman-Morrison-Woodbury)
+
+Suppose we have four matrices: $A$  $C$ $U$ $V$, if $A$ $C$ are invertible and everything conforms, then 
+\[
+(A + UCV)^{-1} = A^{-1} - A^{-1}U(C^{-1} + VA^{-1}U)^{-1}VA^{-1}.
+\]
+
+Proof of LOO-CV formula:
+
+\[
+\begin{aligned}
+y_i - \hat{y}_{(i)}
+ & =  
+y_i - x_i\hat{\beta}_{(i)}    \\
+ &=  y_i -x_i(X^T_{(i)}X_{(i)})^{-1}x^T_{(i)}y_{(i)}      \\
+ &=  y_i -x_i\left((X^TX)^{-1} + \frac{(X^TX)x^T_ix_i(X^TX)^{-1}}{1-h_{ii}}\right)x^T_{(i)}y_{(i)}       \\
+ &=  y_i -x_i\left((X^TX)^{-1} + \frac{(X^TX)x^T_ix_i(X^TX)^{-1}}{1-h_{ii}}\right)(X^TY-x^T_{i}y_{i})       \\  
+ &=  y_i -x_i(X^TX)^{-1}X^TY+x_i(X^TX)^{-1}x^T_{i}y_{i}
+  + \frac{x_i(X^TX)x^T_ix_i(X^TX)^{-1}x^T_iy_i}{1-h_{ii}}-\frac{x_i(X^TX)x^T_ix_i(X^TX)^{-1}X^TY}{1-h_{ii}}\\ 
+&=  y_i -x_i\hat{\beta}+h_{ii}y_{i}
++ \frac{h^2_{ii}y_i}{1-h_{ii}}-\frac{h_{ii}x_i\hat{\beta}}{1-h_{ii}}\\
+&=  y_i -x_i\hat{\beta}+\frac{(1-h_{ii})h_{ii}y_{i}}{1-h_{ii}}
++ \frac{h^2_{ii}y_i}{1-h_{ii}}-\frac{h_{ii}x_i\hat{\beta}}{1-h_{ii}}\\
+&=  y_i -x_i\hat{\beta}+\frac{h_{ii}y_{i}}{1-h_{ii}}-\frac{h_{ii}x_i\hat{\beta}}{1-h_{ii}}\\
+&=  \frac{(y_i-x_i\hat{\beta})(1-h_{ii})}{1-h_{ii}}+\frac{h_{ii}(y_i-x_i\hat{\beta})}{1-h_{ii}}\\
+&=  \frac{y_i-x_i\hat{\beta}}{1-h_{ii}}\\
+&=  \frac{y_i-\hat{y}_i}{1-h_{ii}}\\
+&=  \frac{\hat{e}_i}{1-h_{ii}}
+\end{aligned}
+\]
+
+## Generalized Cross-Validation (GCV)
+
+This estimator is close to LOOCV in that we replace $1-H_{ii}$ by $1-\frac{1}{n}\tr{H}$ in the equation above.
+
+\[
+GCV = \frac{\hat{R}_n}{\left(1-\frac{\tr{H}}{n}\right)^2}
+\]
+
+* Also asymptotically equivalent to AIC
+* Optimal estimator for Ridge regression/RKHS norm regularized smoothers (splines, etc.)
+* For selection, tends to dramatically over select.
+
 ## Generic Cross Validation
 
 Let $\mathcal{N} = \{1,\ldots,n\}$ be the index set for $\mathcal{D}$
@@ -666,6 +737,15 @@ text(2,1.5,'Testing data',cex=3,col=2)
     1. If you want to select models, you might pick BIC
     2. If you want good predictions, you might use CV
     3. It's possible LASSO+CV(1se) picks models better than LASSO+CV(min)
+    
+## Some lessons from my work
+
+* The form of AIC I gave you __doesn't__ work in high dimensions because you can drive RSS to zero.
+* You need to use a high-dimensional variance estimator instead [@HomrighausenMcDonald2015a]
+* LASSO + CV "works" in high dimensions (not LOO, but no one uses it)
+* Under _very_ strong conditions it selects the right model at the right rate.
+* Under weaker conditions, it achieves (nearly) minimax optimal prediction risk.
+[@HomrighausenMcDonald2013;@HomrighausenMcDonald2014;@HomrighausenMcDonald2015]
 
 ## AIC/BIC disaster
 

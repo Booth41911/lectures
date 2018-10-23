@@ -766,10 +766,10 @@ SURE = \widehat{R}_n(\widehat{f}) + 2\sigma^2 \sum_{i=1}^n \frac{\partial f_i}{\
 </ul>
 <p>To recap:</p>
 <p><span class="math display">\[
-  R_n(\widehat{f}) = \mathbb{E}[\ell(Y,\widehat{f}(X))]
+  R_n(\widehat{f}) = \mathbb{E}[L(Y,\widehat{f}(X))]
   \]</span> where the expectation is taken over the new data point <span class="math inline">\((Y,X)\)</span> and <span class="math inline">\(\mathcal{D}_n\)</span> (everything that is random).</p>
 <p>We saw one estimator of <span class="math inline">\(R_n\)</span>: <span class="math display">\[
-\widehat{R}_n(\widehat{f}) = \sum_{i=1}^n \ell(Y_i,\widehat{f}(X_i)).
+\widehat{R}_n(\widehat{f}) = \sum_{i=1}^n L(Y_i,\widehat{f}(X_i)).
 \]</span></p>
 <p>This is the training error. It is a <strong>BAD</strong> estimator because it is often optimistic.</p>
 </div><div id="intuition-for-cv" class="slide section level2">
@@ -788,14 +788,14 @@ SURE = \widehat{R}_n(\widehat{f}) + 2\sigma^2 \sum_{i=1}^n \frac{\partial f_i}{\
 <li><p>Then we test our prediction:</p></li>
 </ul>
 <p><span class="math display">\[
-  \widetilde{R}_1(\widehat{f}^{(1)}) = \ell(Y_1, \widehat{f}^{(1)}(X_1)).
+  \widetilde{R}_1(\widehat{f}^{(1)}) = L(Y_1, \widehat{f}^{(1)}(X_1)).
 \]</span></p>
 <ul>
 <li><p>But that was only one data point <span class="math inline">\((Y_1, X_1)\)</span>. Why stop there?</p></li>
 <li><p>Do the same with <span class="math inline">\((Y_2, X_2)\)</span>! Get an estimate <span class="math inline">\(\widehat{f}^{(2)}\)</span> without using it, then</p></li>
 </ul>
 <p><span class="math display">\[
-  \widetilde{R}_2(\widehat{f}^{(2)}) = \ell(Y_2, \widehat{f}^{(2)}(X_2)).
+  \widetilde{R}_2(\widehat{f}^{(2)}) = L(Y_2, \widehat{f}^{(2)}(X_2)).
 \]</span></p>
 </div><div id="keep-going" class="slide section level2">
 <h1>Keep going</h1>
@@ -803,8 +803,8 @@ SURE = \widehat{R}_n(\widehat{f}) + 2\sigma^2 \sum_{i=1}^n \frac{\partial f_i}{\
 <li>We can keep doing this until we try it for every data point.</li>
 <li>And then average them! (Averages are good)</li>
 <li>In the end we get <span class="math display">\[
-\mbox{LOO-CV} = \sum_{i=1}^n \widetilde{R}_i(\widehat{f}^{(i)}) = \sum_{i=1}^n 
-\ell(Y_i - \widehat{f}^{(i)}(X_i))
+\mbox{LOO-CV} = \frac{1}{n}\sum_{i=1}^n \widetilde{R}_i(\widehat{f}^{(i)}) = \frac{1}{n}\sum_{i=1}^n 
+L(Y_i - \widehat{f}^{(i)}(X_i))
 \]</span></li>
 <li>This is leave-one-out cross validation</li>
 </ul>
@@ -830,6 +830,63 @@ SURE = \widehat{R}_n(\widehat{f}) + 2\sigma^2 \sum_{i=1}^n \frac{\partial f_i}{\
 <li>There is an exception to this one. More on that in a minute.</li>
 </ul></li>
 </ol>
+</div><div id="loo-cv-with-linear-smoothers" class="slide section level2">
+<h1>LOO-CV with linear smoothers</h1>
+<p>Suppose <span class="math inline">\(\widehat{Y} = HY\)</span> and <span class="math inline">\(L(a,b) = (a-b)^2\)</span>.</p>
+<ul>
+<li><p>After much tedious algebra, one can show that <span class="math display">\[
+\frac{1}{n}\sum_{i=1}^n \widetilde{R}_i(\widehat{f}^{(i)}) = \frac{1}{n} \sum_{i=1}^n 
+L(Y_i - \widehat{f}^{(i)}(X_i)) = \frac{1}{n} \sum_{i=1}^n 
+\frac{(Y_i - \widehat{f}(X_i))^2}{(1-H_{ii})^2}.
+\]</span></p></li>
+<li><p>This means we only need to fit the model <strong>once</strong> rather than <span class="math inline">\(n\)</span> times</p></li>
+<li><p>This also suggests how to demonstrate that CV and AIC are asymptotically equivalent.</p></li>
+<li><p>Suppose <span class="math inline">\((1-H_{ii}) \approx (1-h) \forall i\)</span>. Then, <span class="math display">\[
+\log(\textrm{LOO-CV}) = \log(\widehat{R}_n) - \log((1-h)^2)
+\]</span></p></li>
+<li><p>As <span class="math inline">\(n\)</span> gets large (<span class="math inline">\(p\)</span>-fixed), <span class="math inline">\(h\approx p/n\)</span>, and <span class="math inline">\(\log(1-x)\approx x\)</span> when <span class="math inline">\(x\)</span> is small <span class="math display">\[
+\Rightarrow -\log((1-h)^2) \approx 2p/n
+\]</span> just like AIC.</p></li>
+</ul>
+</div><div id="tedious-algebra" class="slide section level2">
+<h1>Tedious algebra</h1>
+<p><strong>Lemma</strong> (Sherman-Morrison-Woodbury)</p>
+<p>Suppose we have four matrices: <span class="math inline">\(A\)</span> <span class="math inline">\(C\)</span> <span class="math inline">\(U\)</span> <span class="math inline">\(V\)</span>, if <span class="math inline">\(A\)</span> <span class="math inline">\(C\)</span> are invertible and everything conforms, then <span class="math display">\[
+(A + UCV)^{-1} = A^{-1} - A^{-1}U(C^{-1} + VA^{-1}U)^{-1}VA^{-1}.
+\]</span></p>
+<p>Proof of LOO-CV formula:</p>
+<p><span class="math display">\[
+\begin{aligned}
+y_i - \widehat{y}_{(i)}
+ &amp; =  
+y_i - x_i\widehat{\beta}_{(i)}    \\
+ &amp;=  y_i -x_i(X^T_{(i)}X_{(i)})^{-1}x^T_{(i)}y_{(i)}      \\
+ &amp;=  y_i -x_i\left((X^TX)^{-1} + \frac{(X^TX)x^T_ix_i(X^TX)^{-1}}{1-h_{ii}}\right)x^T_{(i)}y_{(i)}       \\
+ &amp;=  y_i -x_i\left((X^TX)^{-1} + \frac{(X^TX)x^T_ix_i(X^TX)^{-1}}{1-h_{ii}}\right)(X^TY-x^T_{i}y_{i})       \\  
+ &amp;=  y_i -x_i(X^TX)^{-1}X^TY+x_i(X^TX)^{-1}x^T_{i}y_{i}
+  + \frac{x_i(X^TX)x^T_ix_i(X^TX)^{-1}x^T_iy_i}{1-h_{ii}}-\frac{x_i(X^TX)x^T_ix_i(X^TX)^{-1}X^TY}{1-h_{ii}}\\ 
+&amp;=  y_i -x_i\widehat{\beta}+h_{ii}y_{i}
++ \frac{h^2_{ii}y_i}{1-h_{ii}}-\frac{h_{ii}x_i\widehat{\beta}}{1-h_{ii}}\\
+&amp;=  y_i -x_i\widehat{\beta}+\frac{(1-h_{ii})h_{ii}y_{i}}{1-h_{ii}}
++ \frac{h^2_{ii}y_i}{1-h_{ii}}-\frac{h_{ii}x_i\widehat{\beta}}{1-h_{ii}}\\
+&amp;=  y_i -x_i\widehat{\beta}+\frac{h_{ii}y_{i}}{1-h_{ii}}-\frac{h_{ii}x_i\widehat{\beta}}{1-h_{ii}}\\
+&amp;=  \frac{(y_i-x_i\widehat{\beta})(1-h_{ii})}{1-h_{ii}}+\frac{h_{ii}(y_i-x_i\widehat{\beta})}{1-h_{ii}}\\
+&amp;=  \frac{y_i-x_i\widehat{\beta}}{1-h_{ii}}\\
+&amp;=  \frac{y_i-\widehat{y}_i}{1-h_{ii}}\\
+&amp;=  \frac{\widehat{e}_i}{1-h_{ii}}
+\end{aligned}
+\]</span></p>
+</div><div id="generalized-cross-validation-gcv" class="slide section level2">
+<h1>Generalized Cross-Validation (GCV)</h1>
+<p>This estimator is close to LOOCV in that we replace <span class="math inline">\(1-H_{ii}\)</span> by <span class="math inline">\(1-\frac{1}{n}\mbox{tr}(H)\)</span> in the equation above.</p>
+<p><span class="math display">\[
+GCV = \frac{\widehat{R}_n}{\left(1-\frac{\mbox{tr}(H)}{n}\right)^2}
+\]</span></p>
+<ul>
+<li>Also asymptotically equivalent to AIC</li>
+<li>Optimal estimator for Ridge regression/RKHS norm regularized smoothers (splines, etc.)</li>
+<li>For selection, tends to dramatically over select.</li>
+</ul>
 </div><div id="generic-cross-validation" class="slide section level2">
 <h1>Generic Cross Validation</h1>
 <p>Let <span class="math inline">\(\mathcal{N} = \{1,\ldots,n\}\)</span> be the index set for <span class="math inline">\(\mathcal{D}\)</span></p>
@@ -903,6 +960,15 @@ Let <span class="math inline">\(\mathcal{V}\)</span> be given by all subsets (or
 <li>It’s possible LASSO+CV(1se) picks models better than LASSO+CV(min)</li>
 </ol></li>
 </ul>
+</div><div id="some-lessons-from-my-work" class="slide section level2">
+<h1>Some lessons from my work</h1>
+<ul>
+<li>The form of AIC I gave you <strong>doesn’t</strong> work in high dimensions because you can drive RSS to zero.</li>
+<li>You need to use a high-dimensional variance estimator instead <span class="citation">(Homrighausen and McDonald 2018)</span></li>
+<li>LASSO + CV “works” in high dimensions (not LOO, but no one uses it)</li>
+<li>Under <em>very</em> strong conditions it selects the right model at the right rate.</li>
+<li>Under weaker conditions, it achieves (nearly) minimax optimal prediction risk. <span class="citation">(Homrighausen and McDonald 2013, 2014, 2017)</span></li>
+</ul>
 </div><div id="aicbic-disaster" class="slide section level2">
 <h1>AIC/BIC disaster</h1>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1">n =<span class="st"> </span><span class="dv">30</span>; p =<span class="st"> </span><span class="dv">150</span></a>
@@ -930,6 +996,18 @@ Let <span class="math inline">\(\mathcal{V}\)</span> be given by all subsets (or
 <div id="refs" class="references">
 <div id="ref-Dudoit2005">
 <p>Dudoit, Sandrine, and Mark J. van der Laan. 2005. “Asymptotics of Cross-Validation Risk Estimation in Estimator Selection and Performance Assessment.” <em>Statistical Methodology</em>, 131–54.</p>
+</div>
+<div id="ref-HomrighausenMcDonald2013">
+<p>Homrighausen, Darren, and Daniel J. McDonald. 2013. “The Lasso, Persistence, and Cross-Validation.” In <em>Proceedings of the <span class="math inline">\(30^{th}\)</span> International Conference on Machine Learning (Icml)</em>, edited by Sanjoy Dasgupta and David McAllester, 28:1031–9. PMLR.</p>
+</div>
+<div id="ref-HomrighausenMcDonald2014">
+<p>———. 2014. “Leave-One-Out Cross-Validation Is Risk Consistent for Lasso.” <em>Machine Learning</em> 97 (1-2): 65–78.</p>
+</div>
+<div id="ref-HomrighausenMcDonald2015">
+<p>———. 2017. “Risk Consistency of Cross-Validation for Lasso-Type Procedures.” <em>Statistica Sinica</em> 27 (3): 1017–36.</p>
+</div>
+<div id="ref-HomrighausenMcDonald2015a">
+<p>———. 2018. “A Study on Tuning Parameter Selection for the High-Dimensional Lasso.” <em>Journal of Statistical Computation and Simulation</em> 88: 2865–92.</p>
 </div>
 <div id="ref-shao1997asymptotic">
 <p>Shao, Jun. 1997. “An Asymptotic Theory for Linear Model Selection.” <em>Statistica Sinica</em> 7 (2): 221–42.</p>
