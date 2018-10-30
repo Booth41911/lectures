@@ -3,10 +3,10 @@ title: "Lecture 6"
 author: "DJM"
 date: "30 October 2018"
 output:
-  pdf_document: default
   slidy_presentation:
     css: http://mypage.iu.edu/~dajmcdon/teaching/djmRslidy.css
     font_adjustment: 0
+  pdf_document: default
 bibliography: booth-refs.bib
 ---
 
@@ -217,13 +217,13 @@ If:
 
 2. Your classifiers of choice only needs the ~~inner product~~ between observations, not the observations themselves.  (logistic regression, LDA, and SVMs work)
 
-3. There is a function $K$ such that $K(x,x')=\langle\phi(x),\phi(x')\rangle$ (Mercer's theorem gives this)
+3. There is a function $k$ such that $k(x,x')=\langle\phi(x),\phi(x')\rangle$ (Mercer's theorem gives this)
 
 Then, we can just replace all inner products $\langle x,x'\rangle$ with $K(x,x')$.
 
 * This produces a nonlinear classifier based on a linear classifier.
 
-* We don't actually need $x$ or $\phi$, just $K(x,x')$ (this is an $n\times n$ matrix)
+* We don't actually need $x$ or $\phi$, just $k(x,x')$ (this is an $n\times n$ matrix)
 
 * $\mathcal{Z}$ can be infinite dimensional.
 
@@ -288,8 +288,8 @@ $$k(X,X') = \sum_{j=1}^\infty \theta_j \phi_j(X)\phi_j(X')$$
 
 ## Dumb example
 
-* $\theta_j = I(j\leq n)$
-* $\phi_j(x) = x_j I(j\leq n)$
+* $\theta_j = I(j\leq p)$
+* $\phi_j(x) = x_j I(j\leq p)$
 
 
 $$k(X,X') = \sum_{j=1}^\infty \theta_j \phi_j(X)\phi_j(X') = X^\top X'$$
