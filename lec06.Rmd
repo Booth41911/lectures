@@ -3,10 +3,10 @@ title: "Lecture 6"
 author: "DJM"
 date: "30 October 2018"
 output:
+  pdf_document: default
   slidy_presentation:
     css: http://mypage.iu.edu/~dajmcdon/teaching/djmRslidy.css
     font_adjustment: 0
-  pdf_document: default
 bibliography: booth-refs.bib
 ---
 
@@ -52,16 +52,28 @@ Many methods have linear decision boundaries
 We know that sometimes this isn't sufficient to represent data
 
 
-Sometimes we need to included a polynomial effect or a log transform in
-multiple regression
+Sometimes we include a polynomial effect or a log transform in
+multiple regression to address such deficiencies
 
-Sometimes, a boundary, but in a different space makes all the
+Sometimes, a linear boundary, but in a different space makes all the
 difference.
 
 
 ## KNN
 
-```{r qda-pred, include=FALSE}
+* A supremely simple non-linear classifier
+
+* __Idea__: to predict at $x \given \mathcal{D}$, average the $k$ nearest points in $\mathcal{D}$
+
+* This is very easy to code. There are sophisticated algorithms (not simple) that make this really fast.
+
+* `R` package `class` implements this via `knn()`
+
+* Main issue: curse of dimensionality. When there are many dimensions, things are not very "close" anymore.
+
+## KNN comparison
+
+```{r qda-pred, echo=FALSE}
 library(mvtnorm)
 mu1 = c(1,2); mu0 = c(1,-1)
 n1=50; n0=50
@@ -86,7 +98,7 @@ ggplot(pg, aes(X1,X2)) + geom_raster(aes(fill=predictions)) +
 ```
 
 
-```{r}
+```{r, echo=FALSE}
 library(class)
 pred.grid = expand.grid(X1=seq(min(df$X1),max(df$X1),len=100),
                         X2=seq(min(df$X2),max(df$X2),len=100))
@@ -194,7 +206,7 @@ Of course, as we include more transformations,
 
 -   We need to to prevent overfitting
 
-Can we all this in an automated fashion?
+Can we do all this in an automated fashion?
 
 
 ## The trick (high level)
@@ -226,7 +238,6 @@ svp = ksvm(y~., data=df, type='C-svc')
 plot(svp, data=df)
 ```
 
-# Kernel methods
 
 ## Preliminaries
 
@@ -237,7 +248,7 @@ Then, $A$ has an eigenvalue expansion
 $$A = UDU^{\top} = \sum_{j=1}^p d_j u_j u_j^{\top}$$ where $d_j \geq 0$
 
 
-Each such $A$, generates a new
+Each such $A$, generates a new inner product:
 $$\langle z, z' \rangle = z^{\top}z'  = z^{\top} I z'$$
 $$\langle z, z' \rangle_A = z^{\top}A z'$$
 
@@ -309,9 +320,9 @@ which has $M=\binom{d+p}{d}$ eigenfunctions.
 
 ## Simplification
 
-* Kernels work by opperating on the __rows__ of the predictors in your regression.
+* Kernels work by operating on the __rows__ of the predictors in your regression.
 * Thus, $k(X,X')$ is a function on two rows.
-* Thus $\mathbb{K} = [k_(X_i,X_j)]_{i,j}$ is always an $n\times n$ matrix
+* Thus $\mathbb{K} = [k(X_i,X_j)]_{i,j}$ is always an $n\times n$ matrix
 * It doesn't matter how many columns you have.
 * It doesn't matter how many eigenfunctions you have (can be infinite)
 * You can get these kernels either by specifying a function $k$ that is p.s.d., or by specifying the eigenfunctions. You don't need to go back and forth.
@@ -336,6 +347,36 @@ which has $M=\binom{d+p}{d}$ eigenfunctions.
 * Thus ridge regression depends only on $XX^\top$ (and $x_0^\top X^\top$).
 * This is exactly the linear kernel
 * Everywhere we see $XX^\top$, we can plug in $\mathbb{K}$ for any kernel $k$ we choose.
+* Doesn't work for OLS (function of inner products of columns, not rows)
+
+## Kernels and the dual
+
+* Most often, the representation of the problem that allows for kernelization is the dual of the optimization problem
+
+__Dual of ridge regression__
+
+1. Convert to constrained problem
+\[
+\min_\beta \frac{1}{2}\norm{y-X\beta}_2^2 + \frac{\lambda}{2}\norm{\beta}_2^2
+\Longleftrightarrow \min_{r,\beta} \frac{1}{2}\norm{r}_2^2 + \frac{\lambda}{2}\norm{\beta}_2^2 \quad\mbox{s.t.}\quad r=y-X\beta
+\]
+2. Form Lagrangian
+\[
+L(r,\beta,\alpha) = \frac{1}{2}\norm{r}_2^2 + \frac{\lambda}{2}\norm{\beta}_2^2 +\alpha^\top(r-y+X\beta).
+\]
+3. Eliminate $r$ and $\beta$ (take derivatives, set to zero, substitute back in)
+\[
+\beta = \frac{1}{\lambda} X^\top \alpha,\quad\quad r=-\alpha,
+\]
+\[
+\min_\alpha \frac{1}{2}\alpha^\top (\mathbb{K} + \lambda I)^{-1}\alpha -\lambda \alpha^\top y
+\]
+where $\mathbb{K} = XX^\top$.
+4. Solve for $\alpha$ and recover $\beta$
+\[
+\alpha = \lambda(\mathbb{K} + \lambda I)^{-1}y,\quad\quad \beta = X^\top(\mathbb{K} + \lambda I)^{-1}y. 
+\]
+
 
 ## Kernel SVM
 
@@ -343,6 +384,7 @@ Support vector machines minimize (in Lagrangian form, $\alpha_i$ Lagrange multip
 $$\frac{1}{2}\norm{\beta}_2^2 - \sum_{i=1}^n\alpha_i[Y_i(X_i^{\top}\beta + \beta_0) - 1]$$
 
 Derivatives with respect to $\beta$ and $\beta_0$ imply:
+
 -   $\beta = \sum_{i=1}^n \alpha_i Y_iX_i$
 -   $0 = \sum_{i=1}^n \alpha_i Y_i$
 
@@ -366,8 +408,8 @@ $$h(X) = \beta_0 + \sum_{i=1}^n\alpha_iY_ik(X_i,X)$$
 
 Some common choices for SVMs:  
 
--   $k(x,y) = (1 + x^{\top}y)^d$
--   $k(x,y) = e^{-\tau \norm{x-y}_{b}^b}$
+-   $k(u,v) = (1 + u^{\top}v)^d$ (we saw this has a finite eigen expansion)
+-   $k(u,v) = e^{-\tau \norm{x-y}_{b}^b}$ (this one is infinite, the basis functions are the Fourier series)
 
 For example, $b = 2$ and $\tau = 1/(2\sigma^{2})$ is (proportional to) the Gaussian density
 
@@ -408,7 +450,7 @@ plot(svp, data=df)
 
 ## A few kernel SVMs
 
-* It computes the tuning parameter based on some heuristics.
+* It computes the tuning parameter(s) based on some heuristics.
 
 ```{r}
 svp = ksvm(y~.,data=df,type="C-svc") # Default is 'rbfdot'
@@ -483,10 +525,10 @@ draw.tree(tmp.tree)
 ~~Terminology~~
 
 * We call each split or end point a node.  Each terminal node is referred to as a leaf.  
-    * This tree has 1 interior node and 3 terminal nodes. 
+    * This tree has 2 interior nodes and 4 terminal nodes. 
 
 * The interior nodes lead to branches.  
-    * This graph has two main branches (the S\&P 500 split).
+    * This graph has two main branches (the first S\&P 500 split).
 
 
 
@@ -497,9 +539,9 @@ draw.tree(tmp.tree)
 ```{r}
 small$yhat = predict(tmp.tree, type='class')
 plot(small$SP500, small$Maine, col=c(red,blue)[small$USREC],
-     pch=19,cex=.4,ylab='Maine',xlab='sp500',
+     pch=19,cex=.6,ylab='Maine',xlab='sp500',
      bty='n',las=1)
-partition.tree(tmp.tree,add=TRUE,col=green)
+partition.tree(tmp.tree,add=TRUE,col=green,cex=2)
 ```
 
 ~~Notes~~
@@ -523,13 +565,7 @@ partition.tree(tmp.tree,add=TRUE,col=green)
 ```
 
 
-We can interpret this as 
-
-* S\&P 500 is the most important variable.
-* If S\&P 500 is large enough, then we predict no recession.
-* If S\&P 500 is small enough, then we need to know the change
-  in the Employment Level of Maine.
-
+We can interpret this as? 
 
 
 
@@ -608,12 +644,14 @@ Following this procedure overfits!
 
 * Cross-validation can be used to directly prune the tree, but it is far too expensive (computationally) to use in practice (combinatorial complexity).
 
-* Instead, we use `weakest link pruning', 
+* Instead, we use 'weakest link pruning', 
 \[
 \sum_{m=1}^{|T|} \sum_{i \in R_m} I(y_i = \widehat{y}_{R_m}) + \alpha |T|
 \]
-* $G = \sum_k \widehat{p}_{mk}(1-\widehat{p}_{mk})$: Gini index.  
-where $|T|$ is the number of terminal nodes.  Essentially, we are trading training fit (first term) with model complexity (second) term (compare to lasso).
+where $|T|$ is the number of terminal nodes.  
+
+* Essentially, we are trading training fit (first term) with model complexity (second) term (compare to lasso).
+
 * Now, cross-validation can be used to pick $\alpha$.
 
 
@@ -646,13 +684,13 @@ Now, we use them to predict on the ~~test~~ data (from 2000 to 2011)
 ## Results of trees on recession data
 
 
-```{r, warning=FALSE}
+```{r, warning=FALSE,echo=FALSE}
 test_data = recessions[test,]
 test_data$class = predict(tree, test_data, type='class')
 test_data$prob = predict(tree, test_data, type='vector')[,2]
 test_data = mutate(test_data, correct = class==USREC)
 ggplot(test_data, aes(DATE, prob, color=correct)) + geom_point() + 
-  scale_color_brewer(palette = 'Set1')
+  scale_color_brewer(palette = 'Set1') + geom_hline(yintercept = .5)
 ```
 
 
@@ -892,7 +930,7 @@ then
 
 ## Tree results: Confusion matrices
 
-```{r,include=TRUE}
+```{r,echo=FALSE}
 predclass$null = rep(0,length(test))
 long = gather(predclass, key='predictor', value='class', -truth)
 fun = function(x) table(x$class, x$truth)
@@ -906,7 +944,7 @@ kable(tab[,c(4,2,3)]) %>% group_rows('bagging', 1,2) %>%
 
 ## Tree results: Sensitivity and Specificity
 
-```{r}
+```{r,echo=FALSE}
 sense <- function(pred,truth){
   mat = table(pred,truth)[,2]
   mat[2]/sum(mat)
@@ -930,7 +968,7 @@ test_data$class = predclass$bag
 test_data$prob = predict(bag, test_data, type='prob')[,2]
 test_data = mutate(test_data, correct = class==USREC)
 ggplot(test_data, aes(DATE, prob, color=correct)) + geom_point() + 
-  scale_color_brewer(palette = 'Set1')
+  scale_color_brewer(palette = 'Set1') + geom_hline(yintercept = .5)
 ```
 
 
@@ -967,17 +1005,17 @@ There are many, many different classification algorithms.
 
 Different methods will work bettter in different situations.
 
-~~Linear:~~          Logisitic regression,
+~~Linear:~~  
+  Logisitic regression,  
  linear discriminant analysis (LDA),  
  GLMNET, separating hyperplanes 
  
-~~Non-linear:~~  quadratic discriminant analysis (QDA),
- trees (and associated methods), 
- K-nearest neighbors (KNN)
- Support vector machines (SVM) 
+~~Non-linear:~~  
+ quadratic discriminant analysis (QDA),  
+ trees (and associated methods),   
+ K-nearest neighbors (KNN)  
+ Support vector machines (SVM)  
  Neural networks 
 
 
 
-## Selected references
--->
