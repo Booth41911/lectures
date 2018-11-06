@@ -27,6 +27,7 @@ neural_net <- function(X, y, epochs, lr,
   # X is (p x n)
   # y is dummy matrix, (nclass x n)
   # architecture is c(nvars,...,nclasses)
+  n = ncol(y)
   num_layers = length(architecture)
   listw = architecture[-num_layers] # Skip last (weights from 1st to 2nd-to-last)
   listb = architecture[-1]  # Skip first element (biases from 2nd to last)
@@ -36,7 +37,7 @@ neural_net <- function(X, y, epochs, lr,
                    function(idx) rnorm(listb[[idx]])
   )
   
-  weights <- lapply(seq_along(listb), function(idx){
+  weights <- lapply(seq_along(listw), function(idx){
     c <- listw[[idx]]
     r <- listb[[idx]]
     matrix(rnorm(n=r*c), nrow=r, ncol=c)
@@ -45,15 +46,8 @@ neural_net <- function(X, y, epochs, lr,
   # Using GD rather than SGD for simplicity
   for(j in 1:epochs){
     # Initialise updates with zero vectors
-    nabla_b <- lapply(seq_along(listb), function(idx){
-      r <- listb[[idx]]
-      double(r)
-    })
-    nabla_w <- lapply(seq_along(listb), function(idx){
-      c <- listw[[idx]]
-      r <- listb[[idx]]
-      matrix(0, nrow=r, ncol=c)
-    })  
+    nabla_b <- vector('list', length = length(listb))
+    nabla_w <- vector('list', length = length(listw))
     
     # Step 1: Feed-forward (get predictions)
     activations <- list()
@@ -71,7 +65,7 @@ neural_net <- function(X, y, epochs, lr,
     # Step 2: Backwards (update gradient using errors)
     # Last layer
     delta = (activation - y) 
-    nabla_b[[length(nabla_b)]] = delta
+    nabla_b[[length(nabla_b)]] = rowSums(delta)
     nabla_w[[length(nabla_w)]] = tcrossprod(delta, activations[[length(activations)-1]])
     # Second to second-to-last-layer
     # If no hidden-layer reduces to multinomial logit
@@ -79,13 +73,21 @@ neural_net <- function(X, y, epochs, lr,
       for (k in 2:(num_layers-1)) {
         sp = sigmoid_prime(zs[[length(zs)-(k-1)]])
         delta = crossprod(weights[[length(weights)-(k-2)]], delta) * sp
-        nabla_b[[length(nabla_b)-(k-1)]] = delta
+        nabla_b[[length(nabla_b)-(k-1)]] = rowSums(delta)
         testyy = activations[[length(activations)-k]]
         nabla_w[[length(nabla_w)-(k-1)]] = tcrossprod(delta, testyy)
       }
     }
-    
+    weights <- mapply(function(w,nw) w - (lr/n)*nw, weights, nabla_w)
+    biases <- mapply(function(b,nb) b - (lr/n)*nb, biases, nabla_b)
   }
-  
-  
+  # Final feed forward for predictions
+  activation = X
+  for(f in 1:length(biases)){
+    b = biases[[f]]
+    w = weights[[f]]
+    z <- w %*% activation  + b
+    activation <- sigmoid(z)
+  }
+  return(list(weights=weights, biases=biases, activation=activation))
 }
