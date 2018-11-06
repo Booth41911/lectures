@@ -3,10 +3,10 @@ title: "Lecture 7"
 author: "DJM"
 date: "6 November 2018"
 output:
-  pdf_document: default
   slidy_presentation:
     css: http://mypage.iu.edu/~dajmcdon/teaching/djmRslidy.css
     font_adjustment: 0
+  pdf_document: default
 bibliography: booth-refs.bib
 ---
 
@@ -84,7 +84,7 @@ brain worked by
  
 Crucially, a neuron itself interprets the status of other neurons
 
-There weren't really computers, so we couldnt' estimate these things
+There weren't really computers, so we couldn't estimate these things
 
 ## Background
 
@@ -154,7 +154,7 @@ n = 200
 df = tibble(x = seq(.05, 1, length=n),
  y = sin(1/x) + rnorm(n, 0, .1) ## Doppler function
 )
-ggplot(df, aes(x,y)) + geom_point(shape=".") +
+ggplot(df, aes(x,y)) + geom_point() +
   stat_function(fun=function(x) sin(1/x), color=red, n=501)
 ```
 
@@ -177,7 +177,7 @@ preddf = lapply(ks, fun, df=df)
 names(preddf) <- paste0('k = ',ks) 
 preddf$x = df$x
 preddf = preddf %>% as_tibble() %>% gather(key='key',value='value',-x)
-ggplot(df, aes(x,y)) + geom_point(shape=".") +
+ggplot(df, aes(x,y)) + geom_point() +
   stat_function(fun=function(x) sin(1/x), color='black', n=501) +
   geom_line(data=preddf, mapping=aes(x=x,y=value,color=key)) +
   theme(legend.position = 'bottom')
@@ -216,7 +216,7 @@ L(\mu(X)) & = \beta_0 + \sum_{k=1}^K \beta_k {\sigma(\alpha_{k0} + \alpha_k^{\to
 \end{aligned}$$
 
 __Compare:__  
-A nonparametric GLMwould have the form
+A nonparametric GLM would have the form
 $$L(\mu(X)) = \beta_0 + \sum_{k=1}^K \beta_k {\phi_k(X)}$$
 
 ## Neural networks: Definitions
@@ -511,7 +511,7 @@ E.g.: conjugate gradient
 The most popular are
 
 -   Resilient back-propagation (with or without weight backtracking)
- (Reidmiller, 1994 and Riedmiller, Braun, 1993
+ (Reidmiller, 1994 and Riedmiller, Braun, 1993)
 
 -   Modified globally convergent version (Anastasiadis et al., 2005)
 
@@ -544,6 +544,10 @@ solve: $$\min \hat{R} + \rho(\alpha,\beta)$$
 
 This can be done efficiently by augmenting the gradient descent
 derivatives
+
+__Dropout:__
+
+In each epoch, randomly choose $z\%$ of the nodes and set the weights to zero.
 
 ## Common pitfalls
 
@@ -625,9 +629,9 @@ L(\mu_g(X)) & = \beta_{g0} + \beta_g^{\top}(\textrm{Top Layer}) \quad  ( g = 1, 
 Some comments on adding layers:
 
 -   It has been shown that one hidden layer is sufficient to approximate
-    any piecewise continuous function
+    any bounded piecewise continuous function
 
-    However, this may take a huge number of hidden units (i.e. $K >> 1$)
+    However, this may take a huge number of hidden units (i.e. $K \gg 1$). This is what people mean when they say that NNets are "universal approximators"
     
 -   By including multiple layers, we can have fewer hidden units per
     layer. Also, we can encode (in)dependencies that can speed
@@ -660,7 +664,7 @@ Some specifics:
 - This means I did three starting values and then averaged the results
 
 -   The layers and hidden units are specified like
-    $$(\textrm{\# Hidden Units on Layer 1})\,  (\textrm{\# Hidden Units on Layer 2}) ...$$
+    $$(\textrm{Num Hidden Units on Layer 1})\,  (\textrm{Num Hidden Units on Layer 2}) ...$$
 
 ## Neural networks: Example
 
@@ -780,8 +784,7 @@ include_graphics('gfx/nnExampleResultsHierarchicalPlot.jpg')
 
 ## Neural networks: Localization
 
-One of the main curses/benefits of neural networks is the ability to
-
+One of the main curses/benefits of neural networks is their flexibility
  
 This makes neural networks very customizable, but commits the data
 analyst to intensively examining the data
@@ -834,12 +837,6 @@ include_graphics('gfx/nnExampleResultsHierarchicalPlot2.jpg')
 -   the third column for the output neuron
 
 
-## Neural networks: Localization
-
-```{r, echo=FALSE}
-include_graphics('gfx/nnExampleResultsHierarchicalPlot1.jpg')
-include_graphics('gfx/nnExampleResultsHierarchicalPlot2.jpg')
-```
 
 
 
@@ -852,7 +849,7 @@ The most common recommendation I've seen is to take the 3 tuning
 parameters: The number of hidden units, the number of layers, and the
 regularization parameter $\lambda$
 
-or a stopping criterion $\lambda$ for the iterative solver
+(alternatively, a stopping criterion for the iterative solver)
  
 1. Choose $\lambda = 0$ and use risk estimation to choose the number
 of hidden units
@@ -920,6 +917,7 @@ This may be a good line for future research.
 Off the top of my head, without lots of justification
 
 Why don't statisticians like them?  
+
 - There is almost no theory (certainly nothing for deep nets)
 - Theory is (as far as we can tell) nearly impossible
 - No good understanding of when they work
@@ -932,6 +930,7 @@ Why don't statisticians like them?
 Off the top of my head, without lots of justification
 
 Why are they hot?  
+
 - Perform exceptionally well on typical CS tasks (images, translation)
 - Take advantage of SOTA computing (parallel, GPUs)
 - Very good for multinomial logistic regression
@@ -943,6 +942,7 @@ Why are they hot?
 One idea that works well on related problems.
 
 Essentially:  
+
 1. Estimate all the weights in a deep network for some task (say image classification)
 2. Use those weights in a new, related, problem.
 3. Cut off the output layer, and reestimate it on new data, holding the other weights constant.
