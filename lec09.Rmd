@@ -1,0 +1,226 @@
+---
+title: "Lecture 9"
+author: "DJM"
+date: "27 November 2018"
+output:
+  slidy_presentation:
+    css: http://mypage.iu.edu/~dajmcdon/teaching/djmRslidy.css
+    font_adjustment: 0
+  pdf_document: default
+bibliography: booth-refs.bib
+---
+
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Expect}[1]{\mathbb{E}\left[ #1 \right]}
+\newcommand{\Var}[1]{\mathbb{V}\left[ #1 \right]}
+\newcommand{\Cov}[2]{\mathrm{Cov}\left[#1,\ #2\right]}
+\newcommand{\given}{\ \vert\ }
+\renewcommand{\P}{\mathbb{P}}
+\newcommand{\argmin}{\arg\min}
+\newcommand{\argmax}{\arg\max}
+\newcommand{\F}{\mathcal{F}}
+\newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
+\newcommand{\indicator}{\mathbf{1}}
+\renewcommand{\bar}{\overline}
+\renewcommand{\hat}{\widehat}
+\newcommand{\tr}[1]{\mbox{tr}(#1)}
+\newcommand{\X}{X}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\set}[1]{\texttt{set}(#1)}
+
+
+
+```{r setup, include=FALSE}
+library(knitr)
+opts_chunk$set(message=FALSE, warning=FALSE, echo=FALSE,
+               fig.align='center',fig.width=10,
+               fig.height=6, cache=TRUE, autodep = TRUE)
+library(tidyverse)
+theme_set(theme_minimal(base_family="Times"))
+green = '#00AF64'
+blue = '#0B61A4'
+red = '#FF4900'
+orange = '#FF9200'
+colvec = c(green,blue,red,orange)
+```
+
+# Causal inference
+
+# Introduction
+
+## Source and thanks
+
+Much of this material comes from Larry Wasserman's lecture in "Statistical Machine Learning 10-702" at CMU.
+
+Some additions come from Cosma Shalizi's textbook [Advanced Data Analysis from an Elementary Point of View](http://www.stat.cmu.edu/~cshalizi/ADAfaEPoV/).
+
+## Prediction vs. causation
+
+These two are very different.
+
+* Prediction: Predict $Y$ after __observing__ $X=x$
+* Causation: Predict $Y$ after __setting__ $X=x$
+
+Example:
+
+* Prediction: Predict health given that a person eats beets.
+* Causation: Predict health if I give someone beets.
+
+The first case is simply observational while the second relies on an intervention.
+
+Analysis requires different techniques, and often strong assumptions.
+
+## Two types of causal questions
+
+~~Type I:~~
+
+Do cell phones cause brain cancer?
+
+In mathematical terms, there are variables $X$ and $Y$ and we want to determine the causal effect of $X$ on $Y$.
+
+Procedure: find a parameter $\theta$ that measures this effect and try to estimate it.
+
+Called __causal inference__
+
+~~Type II:~~
+
+I have a pile of variables and I want to discern their causal relationships.
+
+Called __causal discovery__
+
+Larry argues that solving this problem is statistically impossible. 
+
+Lots of people work on this problem however.
+
+## Two types of data
+
+~~Type I:~~
+
+Data from randomized, controlled experiments.
+
+The inference problem is straightforward (well-defined).
+
+~~Type II:~~
+
+Data from observational studies.
+
+The inference problem is difficult, requires making assumptions and using domain knowledge.
+
+## Three languages
+
+1. Counterfactuals
+2. Causal graphs 
+3. Structural equation models
+
+These are essentially equivalent up to minor details.
+
+## Motivation for different notation
+
+* Height and reading ability are associated.
+
+* Stretching a child will not improve reading ability.
+
+* Height does not __cause__ improved reading skill.
+
+* Smoking causes cancer.
+
+* Society is pretty confident that giving people cigarettes will give them cancer.
+
+\[
+P(Y\given X=x) \quad\quad\quad \textrm{v.s.} \quad\quad\quad P(Y\given \set{X=x})
+\]
+
+Correlation is not causation in math
+\[
+P(Y\given X=x) \neq P(Y\given \set{X=x})
+\]
+
+---
+
+![](https://imgs.xkcd.com/comics/cell_phones.png)
+
+
+---
+
+![](https://imgs.xkcd.com/comics/correlation.png)
+
+
+## Main messages
+
+1. Causal effects can be estimated consistently from randomized experiments.
+2. It is difficult to estimate causal effects from observational (non-randomized) experiments.
+3. All causal conclusions from observational studies should be regarded as very tentative.
+
+As with many of the topics we've examined, we will merely scratch the surface.
+
+# Counterfactuals
+
+## Treatment effects
+
+* We get to see $Y$, the "response" or "outcome"
+* We also get to see $X$, the "treatment"
+* For a given subject, $(X_i,Y_i)$, we only see the $Y_i$ at the particular $X_i$.
+* We don't get to see that same individual's outcome at a different $X_i$.
+* That is, we don't know how their outcome would change if we changed their treatment.
+* The __counterfactual__ is how $Y$ varies for different values of treatment.
+
+```{r}
+df = data.frame(X=1:5, Y=1:5)
+g1 = ggplot(df, aes(X,Y)) + geom_point() + ylim(-1,6) + xlim(-1,6) +
+  theme(axis.text = element_blank(), panel.grid = element_blank()) +
+  geom_hline(yintercept = 0) + geom_vline(xintercept = 0)
+g2 = g1 + geom_abline(slope = -1, intercept = 1:5*2, linetype = 'dotted')
+library(gridExtra)
+grid.arrange(g1,g2,nrow=1)
+```
+
+## Simplification
+
+* Assume $X$ is binary. (for ease, doesn't change anything)
+
+* $X=1$ means treated, $X=0$ means not
+
+* $\Expect{Y\given X=x}$ is what we want for prediction.
+
+* Let 
+\[ 
+Y = 
+\begin{cases}
+Y_1 & X = 1\\ Y_0 & X=0.
+\end{cases}
+\]
+
+* Thus, $Y=XY_1+(1-X)Y_0$. That's what we see.
+
+* $(Y_0,Y_1)$ are called __potential outcomes__, but we only see one of them, not both.
+
+* The one we don't see is the counterfactual.
+
+## Example data
+
+```{r}
+data.frame(X = c(1,1,1,1,0,0,0,0),
+           Y = c(1,0,1,1,0,1,0,0),
+           Y0 = c('*','*','*','*',0,1,0,0),
+           Y1 = c(1,0,1,1,'*','*','*','*')) %>%
+  kable() %>% kable_styling(full_width = FALSE, position = 'center')
+```
+
+* We see only $X$ and $Y$.
+* The asterisks are unobserved
+
+## Causal inference
+
+* We want the effect of the treatment.
+
+* This involves the distribution $p(y_1,y_0)$.
+
+* For example the __mean treatment effect__ or __mean causal effect__ is
+\[
+\theta = \Expect{Y_1}-\Expect{Y_0} = \Expect{Y\given \set{X=1}} - \Expect{Y\given \set{X=0}}
+\]
+
+__Lemma__
+\[ 
+\Expect{Y_1} \neq \Expect{Y\given X=1} \quad\quad\quad \Expect{Y_0} \neq \Expect{Y\given X=0}
+\]
