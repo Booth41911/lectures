@@ -27,7 +27,8 @@ bibliography: booth-refs.bib
 \newcommand{\X}{X}
 \newcommand{\R}{\mathbb{R}}
 \newcommand{\set}[1]{\texttt{set}(#1)}
-
+\def\indep{\perp\!\!\!\perp}
+\def\notindep{\not\!\perp\!\!\!\perp}
 
 
 ```{r setup, include=FALSE}
@@ -224,3 +225,280 @@ __Lemma__
 \[ 
 \Expect{Y_1} \neq \Expect{Y\given X=1} \quad\quad\quad \Expect{Y_0} \neq \Expect{Y\given X=0}
 \]
+
+## What can we estimate?
+
+In general, we cannot estimate $\theta$.
+
+We can estimate $\alpha = \Expect{Y\given X=1} - \Expect{Y\given X=0}$.
+
+But these are not equal.
+
+__Theorem__ [@RobinsScheines2003]:  
+Let $\mathcal{P}$ be that set of distributions for $(X,Y_0,Y_1,Y)$ where $P(X=0)>\delta$ and $P(X=1)>\delta$ for some $\delta>0$. Then there is no estimator $\hat{\theta}$ which depends only on $(X,Y)$ such that for all $\epsilon>0$,
+\[
+\sup_{P\in\mathcal{P}} P\left(|\hat{\theta}_n-\theta|>\epsilon\right) \xrightarrow{n\rightarrow\infty} 0.
+\]
+
+We'll discuss the intuition in a bit.
+
+If $X$ is continuous, the we care about $\theta(x) = \Expect{Y\given \set{X=x}} \neq \Expect{Y\given X=x}$.
+
+## Ways to make the thing estimable
+
+1. Randomization
+2. Adjusting for confounding
+3. Instrumental variables
+
+## Randomization
+
+If we randomly assign $X=0$ or $X=1$, then
+\[
+(Y_0,Y_1) \indep X.
+\]
+
+Note: $X$ is __not__ independent of $Y$.
+
+__Theorem:__  
+Let $\mathcal{P}$ be that set of distributions where $P(X=0)>\delta$ and $P(X=1)>\delta$ for some $\delta>0$ and $X$ is assigned randomly. Then $\theta=\alpha$ and
+\[
+\hat{\alpha} = \frac{\sum X_iY_i}{\sum X_i} - \frac{\sum (1-X_i)Y_i}{\sum (1-X_i)}
+\]
+satisfies (for all $\epsilon >0$)
+\[
+\sup_{P\in\mathcal{P}} P\left(|\hat{\alpha}_n-\theta|>\epsilon\right) \xrightarrow{n\rightarrow\infty} 0.
+\]
+
+In summary, under random assignment, correlation $=$ causation.
+
+The same holds if $X$ is continuous: you can use regression to estimate causal effects.
+
+## Adjusting for confounding
+
+* This requires strong assumptions.
+
+* Without randomization, we don't have $(Y_0,Y_1) \indep X$.
+
+* The hope is that there are some additional variables $Z$ such that
+\[
+(Y_0,Y_1) \indep X \given Z
+\]
+
+* This condition is referred to as __ignorability__ or a lack of __unmeasured confounding__
+
+* If you proceed in this manner, you must assert that the above condition holds.
+
+## Main result
+
+__Theorem:__  
+If $(Y_0,Y_1) \indep X \given Z$, then
+\[
+\theta = \int \mu(1,z)p(z)dz - \int \mu(0,z)p(z)dz
+\]
+where $\mu(x,z) = \Expect{Y\given X=x,\ Z=z}$. A consistent estimator of $\theta$ is
+\[
+\hat{\theta} = \frac{1}{n}\sum \left(\hat{\mu}(1,Z_i) - \hat{\mu}(0,Z_i)\right)
+\]
+where $\hat{\mu}$ is a consistent estimator of $\Expect{Y\given X=x,\ Z=z}$.
+
+* One needs to estimate $\mu$ semi-parametrically.
+
+* The bias-variance tradeoff for estimating $\mu$ is not appropriate. You want lower bias and larger variance. This choice is not well understood.
+
+* This is different than
+\[
+\alpha = \Expect{Y\given X=1} - \Expect{Y\given X=0} = \int \mu(1,z)p(z\given X=1)dz - \int \mu(0,z)p(z\given X=0)dz
+\]
+
+## Linearity
+
+If   
+1. $X$ is binary and  
+2. $(Y_0,Y_1) \indep X \given Z$ and  
+3. $\Expect{Y\given X=x, Z=z} = \beta_0 + \beta_1 x + \beta_2^\top z$, then
+\[
+\theta = \beta_1.
+\]
+
+# Causal graphical models
+
+## DAGs
+
+```{r,fig.height=6,fig.width=6}
+library(igraph)
+library(network)
+mat = matrix(0,nrow=7,ncol=7)
+mat[1,2] <- mat[1,4] <- mat[1,6] <- mat[2,3] <- 1
+mat[3,5] <- mat[4,7] <- mat[5,7] <- mat[6,7] <- 1
+net = graph_from_adjacency_matrix(mat, mode="directed")
+names_mat <- c("health_conscious","tooth_brushing","gum_disease",
+                                    "exercise","inflamation", "diet", "heart_disease")
+V(net)$color = RColorBrewer::brewer.pal(3,'Set2')[c(0,1,0,0,0,0,2)+1]
+plot(net, edge.arrow.size=.4,vertex.size=30,
+     vertex.label = names_mat, vertex.label.color='black')
+```
+
+* DAGs imply conditional independence relationships
+
+* p(heart disease) = p(health consciousness) p(brushing | health) p(exercise | health)
+p(diet | health) $\times$   
+p(gum disease | brushing) p(inflamation | gum disease) p(heart disease | diet, exercise, inflamation)
+
+* Nodes are conditionally independent of everything given their parents
+
+* We want to know if better brushing decreases heart disease
+
+
+
+## Causal DAGs
+
+```{r,fig.height=6,fig.width=6}
+net = delete_edges(net, 1|2)
+plot(net, edge.arrow.size=.4,vertex.size=30,
+     vertex.label = names_mat, vertex.label.color='black')
+```
+
+1. Remove arrows into brushing.  
+2. Set brushing equal to the intervention.  
+3. Calculate the new distribution of heart disease.
+
+This turns out to be equivalent to the counterfactual representation.
+
+## Structural equation models
+
+```{r,fig.height=4,fig.width=4}
+simp = matrix(0, 3, 3)
+simp[1,2] <- simp[2,3] <- simp[1,3] <- 1
+simp = graph_from_adjacency_matrix(simp, mode="directed")
+plot(simp, edge.arrow.size=.4,vertex.size=30, vertex.color = 'steelblue',
+     vertex.label = c('Z','X','Y'), vertex.label.color='black')
+```
+
+* SEMs are equivalent to graphical models.
+
+* Write
+\[
+\begin{aligned}
+Z &= g_1(U)\\
+X &= g_2(Z,V)\\
+Y &= g_3(Z,X,W)
+\end{aligned}
+\]
+for some (independent) variables $U,V,W$ and some functions $g_1,g_2,g_3$
+
+* Deleting the edge between $Z$ and $X$ and intervening is just replacing $g_2(Z,V)$ with $X=x$.
+
+## Pitfall
+
+It is not enough to "just condition on everything".
+
+```{r,fig.height=4,fig.width=4}
+simp = matrix(0, 3, 3)
+simp[2,1] <- simp[2,3] <- simp[3,1] <- 1
+simp = graph_from_adjacency_matrix(simp, mode="directed")
+plot(simp, edge.arrow.size=.4,vertex.size=30, vertex.color = 'steelblue',
+     vertex.label = c('Z','X','Y'), vertex.label.color='black')
+```
+
+* $P(Y \given X=x) = P(Y \given \set{X=x})$.
+* $P(Y \given X=x, Z=z) \neq P(Y \given X=x)$.
+* If we remove the arrow from $X\rightarrow Y$, we still have a problem because $Y$ and $X$ are dependent conditional on $Z$, but have no direct causal relationship.
+
+## Identification strategies
+
+1. "back door criterion"
+2. "front door criterion"
+3. "instrumental variable"
+
+Note that all of these require "knowing" the graph and measuring appropriate variables.
+
+Even then, we then have to solve difficult estimation problems or make strong assumptions.
+
+## The back door (identification by conditioning)
+
+```{r, out.width="50%"}
+include_graphics("gfx/back-door.jpg")
+```
+
+* We want to condition on a set of variables that blocks (undirected) paths between $X$ and $Y$ with an arrow __into__ $X$. 
+
+* If a set $S$ achieves this, and no node in $S$ is a descendent of $X$, then
+\[
+P(Y\given \set{X=x}) = \sum_s P(Y\given X=x, S=s)P(S=s)
+\]
+
+* We estimate the terms on the right.
+
+__Examples__
+1. $S=\{S_1,S_2\}$
+2. $S=\{S_3\}$
+3. $S=\{S_1,S_2,S_3\}$
+
+If we add $B$ to any of these, it breaks.
+
+## The front door (identification by mechanisms)
+
+```{r, out.width="50%"}
+include_graphics("gfx/front-door.jpg")
+```
+
+* If A set of variables $M$  
+
+    1. Blocks all directed paths from $X$ to $Y$.
+    2. Has no unblocked back door paths from $X$ to $M$.
+    3. Blocks all back door paths from $X$ to $Y$.
+    
+* Then,
+\[
+P(Y\given \set{X=x}) = \sum_m P(M=m\given X=x) \sum_{x'} P(Y\given X=x', M=m)P(X=x')
+\]
+
+Why??  
+1. Means all causal dependence of $X$ on $Y$ flows through $M$.  
+2. Means the causal effect of $X$ on $M$ is direct. ($P(M=m\given \set{X=x}) = P(M=m\given X=x)$)  
+3. Means $X$ satisfies the back door criterion for the causal effect of $M$ on $Y$.
+
+__Example:__  (don't observe $U$, want effect of $X$ on $Y$)  
+
+* $M \rightarrow Y$ is direct  
+* $X \leftarrow U \leftarrow Y$ confounds the effect of $X$ on $Y$.  
+* But $X$ flows through $M$.  
+* $M$ is confounded by the back-door path $M\leftarrow X\leftarrow U\leftarrow Y$.  
+* Conditioning on $X$ blocks the back-door.
+
+## Instruments
+
+```{r, out.width="50%"}
+include_graphics("gfx/instrument.jpg")
+```
+
+* A variable $I$ is an instrument for identifying the effect of $X$ on $Y$ if  
+
+    1. There is a set of observed controls $S$ such that $I \notindep X | S$.
+    2. Every unblocked path from $I$ to $Y$ has an arrow pointing into $X$.
+    
+* Then
+\[
+P(Y\given \set{I=i}) = \sum_x P(Y\given \set{X=x}) P(X=x \given \set{I=i}).
+\]
+
+* This helps iff we can solve for $P(Y\given \set{X=x})$. If everything is linear, we can use OLS. If not, we must solve a linear integral equation.
+
+__Example:__  
+1. $I$ is a valid instrument if we can condition on $S$.
+2. If we can condition on $U$, we don't need an instrument.
+3. If we condition on $B$, 
+
+## Issues with instruments
+
+There's the whole linearity thing. I won't go into this, but it's rare to see an IV setup without assuming linearity.
+
+Condition (2), $I \indep Y \given S, \set(X=x)$ is strong and not easily testable.
+
+It means that, if we block all arrows into $X$, $S$ blocks all the other paths between $I$ and $Y$. 
+
+To do this, one would to use different data to make such an argument (there aren't other important mechanisms we're ignoring), so mostly it is argued based on domain knowledge.
+
+However, there are often multiple domain theories which would produce different conclusions.
+
+Finally, most instruments are __weak__ (they have small covariance with $X$). This leads to unbiased, though high-variance estimates of the regression coefficient. While the direct coefficient is biased, it may be lower variance.
