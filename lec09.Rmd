@@ -245,7 +245,7 @@ Let $\mathcal{P}$ be that set of distributions for $(X,Y_0,Y_1,Y)$ where $P(X=0)
 \sup_{P\in\mathcal{P}} P\left(|\hat{\theta}_n-\theta|>\epsilon\right) \xrightarrow{n\rightarrow\infty} 0.
 \]
 
-We'll discuss the intuition in a bit.
+__Proof:__ Simply construct $p(x,y_0,y_1)$ and $q(x,y_0,y_1)$ such that $\theta(p) \neq \theta(q)$ but $p(x,y) = q(x,y)$.
 
 If $X$ is continuous, the we care about $\theta(x) = \Expect{Y\given \set{X=x}} \neq \Expect{Y\given X=x}$.
 
@@ -349,6 +349,8 @@ plot(net, edge.arrow.size=.4,vertex.size=30,
 p(diet | health) $\times$   
 p(gum disease | brushing) p(inflamation | gum disease) p(heart disease | diet, exercise, inflamation)
 
+* (the last term factors too)
+
 * Nodes are conditionally independent of everything given their parents
 
 * We want to know if better brushing decreases heart disease
@@ -367,7 +369,22 @@ plot(net, edge.arrow.size=.4,vertex.size=30,
 2. Set brushing equal to the intervention.  
 3. Calculate the new distribution of heart disease.
 
-This turns out to be equivalent to the counterfactual representation.
+\[
+\begin{aligned}
+& p(y \given \set{X=x}) = \int p(z)p(y\given x,z)dz\\
+\Rightarrow & p(y \given \set{X=1}) - p(y \given \set{X=1}) = \int p(z)p(y\given 1,z)dz - \int p(z)p(y\given 0,z)dz
+\end{aligned}
+\]
+
+This is equivalent to the counterfactual representation.
+
+\[
+\begin{aligned}
+\theta &= \Expect{Y \given \set{X=1}} - \Expect{Y \given \set{X=0}}\\
+ &= \int \int yp(z)p(y\given 1,z)dzdy - \int \int yp(z)p(y\given 0,z)dzdy\\
+ &= \int \mu(1,z)p(z)dz - \int \mu(0,z)p(z)dz.
+\end{aligned}
+\]
 
 ## Structural equation models
 
@@ -434,10 +451,10 @@ P(Y\given \set{X=x}) = \sum_s P(Y\given X=x, S=s)P(S=s)
 
 * We estimate the terms on the right.
 
-__Examples__
-1. $S=\{S_1,S_2\}$
-2. $S=\{S_3\}$
-3. $S=\{S_1,S_2,S_3\}$
+__Examples__  
+1. $S=\{S_1,S_2\}$  
+2. $S=\{S_3\}$  
+3. $S=\{S_1,S_2,S_3\}$  
 
 If we add $B$ to any of these, it breaks.
 
@@ -490,9 +507,9 @@ P(Y\given \set{I=i}) = \sum_x P(Y\given \set{X=x}) P(X=x \given \set{I=i}).
 * This helps iff we can solve for $P(Y\given \set{X=x})$. If everything is linear, we can use OLS. If not, we must solve a linear integral equation.
 
 __Example:__  
-1. $I$ is a valid instrument if we can condition on $S$.
-2. If we can condition on $U$, we don't need an instrument.
-3. If we condition on $B$, 
+1. $I$ is a valid instrument if we can condition on $S$.  
+2. If we can condition on $U$, we don't need an instrument.  
+3. If we condition on $B$, $I$ is no longer valid.
 
 ## Issues with instruments
 
@@ -740,6 +757,273 @@ __The Spirtes-Glymour-Scheines algorithm__ for this and refinements, see [@Spirt
 2. For each pair $X$ and $Y$ and the set of other variables $S$, test if $X\indep Y \given S$
 3. Find colliders by checking for conditional dependence, orient the edges of colliders
 4. Try to orient undirected edges by checking for consistency with the already-oriented edges; continue until you can't
+
+## Extensions
+
+A number of other algorithms
+
+* PC algorithm is like SGS but more computationally feasible
+* CI, FCI and RFCI try to determine if there are (causal) unobserved variables and then learn some structure for the observed ones
+
+# Approximation techniques
+
+## What to do with big data
+
+Modern statistical applications --- genomics, neural
+image analysis, text analysis, weather prediction --- have large
+numbers of covariates 
+$p$
+
+
+Also frequently have lots of observations $n$.
+
+
+Need algorithms which can handle these kinds of data sets. With
+good statistical properties
+
+Three big families:  
+1. $n \ll p$ - Dimension reduction, kernels, random projection  
+2. $n \gg p$ - compression, sub-sampling  
+3. Algorithmic things (either/both) - SGD, ADMM, early stopping
+
+
+## Today
+
+Many statistical methods use (perhaps implicitly) a singular value
+decomposition (SVD) to solve an optimization problem:
+
+
+- Penalized Least Squares:  
+\[\min_\beta \norm{Y-X\beta}_2^2 + \lambda \mbox{Pen}(\beta)\]
+
+```{r optim-figs1, fig.width=3, fig.height=3}
+n = 100
+x=rnorm(n)
+df1 = data.frame(y=x+rnorm(n,0,1),x=x)
+ggplot(df1, aes(x=x,y=y)) + geom_point(color=green) + stat_smooth(method='lm',color=orange)
+```
+
+
+- PCA:  
+\[\max_{V^\top V=I_d} V^\top X^\top X V \]
+
+
+```{r optim-figs2, fig.width=3, fig.height=3}
+library(ggfortify)
+df <- iris[c(1, 2, 3, 4)]
+autoplot(prcomp(df), data = iris, colour = 'Species', loadings = TRUE, loadings.color=red) + 
+  scale_color_manual(values=c(green,orange,blue)) + 
+  theme(legend.position = 'none')
+```
+
+
+
+
+## SVD == Slow
+
+
+The SVD is computationally expensive.
+
+
+For a generic $n\times p$ matrix, the SVD requires $O\left(\min\left\{np^2,n^2p\right\}\right)$ and storage of the entire matrix in fast memory.
+
+
+I want to understand the statistical properties of some
+approximations which speed up computation and save storage.
+
+
+## Core techniques
+
+If $\X$ fits into RAM, there exist excellent algorithms in LAPACK that are
+
+- Double precision
+- Very stable
+- $O(np^2)$ with small constants when $n\gg p$.
+- \alr{require extensive random access to matrix}
+
+
+There is a lot of interest in finding and analyzing techniques that
+extend these approaches to large(r) problems 
+
+## Out-of-core techniques
+
+Many techniques focus on randomized compression
+
+This is sometimes known as sketching or preconditioning
+
+* Rokhlin, Tygert, (2008) "A fast randomized algorithm for
+overdetermined linear least-squares regression."
+* Drineas, Mahoney, et al., (2011) "Faster least squares approximation."
+* Woodruff, (2014) "Sketching as a Tool for Numerical Linear
+Algebra."
+* Wang, Lee, Mahdavi, Kolar, Srebro, (2016) "Sketching meets random projection in the dual."
+* Ma, Mahoney, and Yu, (2015), "A statistical perspective on algorithmic leveraging."
+* Pilanci and Wainwright, (2015-2016). Multiple papers.
+* Others.
+
+
+# Kernel approximation
+
+## A quick sketch of the intuition
+
+
+* Suppose we want to approximate $S=\frac{1}{n}X^\top X \in \R^{p\times p}$
+
+* $S$ is symmetric and positive semi-definite
+
+* Choose $t$ and form a ``sketching'' matrix $\Phi \in \mathbb{R}^{p\times t}$
+
+* Then write 
+\[
+S \approx (S\Phi) (\Phi^\top S \Phi)^\dagger (S\Phi)^\top
+\]
+
+
+      
+## Special cases 
+
+* Nyström and column sampling correspond to particular $\Phi$
+
+* But they are easy to implement without extra multiplications
+
+* Randomly choose $t$ entries in $\{1,\ldots,p\}$ and
+
+* Then partition the matrix so the selected portion is $S_{11}$
+\[
+S = \begin{bmatrix} S_{11} & S_{12}\\ S_{21} & S_{22}\end{bmatrix}
+\]
+
+~~Nyström~~
+\[
+S \approx \begin{bmatrix} S_{11} \\ S_{21} \end{bmatrix}
+S_{11}^\dagger \begin{bmatrix}S_{11} & S_{12}\end{bmatrix}
+\]
+
+~~Column sampling~~
+\[
+S \approx U\left(\begin{bmatrix} S_{11} \\
+    S_{21} \end{bmatrix}\right) \Lambda\left(\begin{bmatrix} S_{11}
+    \\ S_{21} \end{bmatrix}\right) U \left(\begin{bmatrix} S_{11} \\
+    S_{21} \end{bmatrix}\right)^\top 
+\]
+
+## Applications
+
+* Kernel methods of all types 
+* SVM, Kernel PCA, Ridge regression, Kmeans, etc.
+
+# Compression
+
+## Compression
+
+__Basic Idea:__
+
+- Choose some matrix $Q\in\R^{q\times n}$ .
+- Under many conditions, sufficient to choose $q=\Omega(p)$.
+- Use $Q\X$ (and) $QY$ instead in the optimization.
+- $O(np^2)\longrightarrow O(p^3)$.
+
+
+
+Finding $Q\X$ for arbitrary $Q$ and $\X$ takes $O(qnp)$ computations.
+
+
+So we're back to $O(np^2)$.
+
+
+To get this approach to work, we need some structure on $Q$
+
+
+
+## The $Q$ matrix
+
+- Gaussian: 
+    
+    Well behaved distribution and eas(ier) theory.  Dense matrix
+
+- Fast Johnson-Lindenstrauss Methods
+
+- Randomized Hadamard (or Fourier) transformation:
+    
+    Allows for $O(np\log(p))$ computations.
+- $Q=\pi\tau$ for $\pi$ a permutation of $I$ and $\tau = [I_q\ 0]$:
+    
+    $Q\X$ means ``read $q$ (random) rows''
+
+- Sparse Bernoulli:
+\[
+Q_{ij}
+\stackrel{i.i.d.}{\sim}
+\begin{cases}
+1 & \textrm{with probability }  1/(2s) \\ 
+0 & \textrm{with probability }  1-1/s\\
+-1 & \textrm{with probability }  1/(2s) \\ 
+\end{cases}
+\]
+This means $Q\X$ takes $O\left(\frac{qnp}{s}\right)$ ``computations''
+on average.
+
+## Compression methods
+
+
+- Basic
+\[
+\min_\beta \norm{Y-X\beta} + \lambda \mbox{Pen}(\beta) \longrightarrow
+\min_\beta \norm{Q(Y-X\beta)} + \lambda \mbox{Pen}(\beta)
+\]
+
+- Hessian
+\[
+\min_\beta \norm{Y-X\beta} + \lambda \mbox{Pen}(\beta) \longrightarrow
+\min_\beta -2\beta^\top \X^\top Y + \beta^\top X^\top Q^\top Q X\beta + \lambda \mbox{Pen}(\beta)
+\]
+
+- Combined 
+\[
+\hat{\beta} = \alpha_1 \hat{\beta}_{\textrm{Basic}} + \alpha_2\hat{\beta}_{\textrm{Hess}}
+\]
+
+- Iterative Hessian (iteration $t+1$)
+\[
+\min_\beta \norm{QX(\beta-\beta^{(t)})}_2^2 - 2\beta^\top \X^\top Y + \beta^\top X^\top X\beta^{(t)} + \lambda \mbox{Pen}(\beta)
+\]
+
+## When do they work
+
+* Theory generally provides $(1+\epsilon)$-approximation to $\hat\beta_{OLS}$
+
+For OLS, typical results would be to produce an $\tilde{\beta}$ such that
+\[
+\begin{aligned}
+\norm{\X\tilde{\beta} - Y}_2^2 &\leq (1+\epsilon)  \norm{\X\hat{\beta} - Y}_2^2,\\
+\norm{\X(\tilde{\beta} - \hat{\beta})}_2^2 &\leq \epsilon\norm{\X\hat{\beta}}_2^2,\\
+\norm{\tilde{\beta} - \hat{\beta}}_2^2 &\leq \epsilon\norm{\hat{\beta}}_2^2,
+\end{aligned}
+\]
+
+* These require $iid$ sub-Gaussian noise
+* The proof techniques basically hope that the compression "gets" all the leverage points in $X$.
+* So the hope is that the approximation is close to as good as the full solution
+* If there are outliers, it's possible that the approximation will "smear" out their effects, results could be better
+* For more information see [@PilanciWainwright2016;@HomrighausenMcDonald2017;@WangLee2017]
+
+# Algorithms
+
+## Early stopping
+
+* Easy to implement. Stop your GD earlier than convergence (seems to give some regularization too)
+
+```{r}
+include_graphics('gfx/timings.jpg')
+```
+
+* Alternatives: approximate inside the algorithm
+
+* Approximate the gradient rather than compute it
+
+* Approximate the ADMM update
+
+* Unclear what the statistical implications are if you do this
 
 
 ## References
