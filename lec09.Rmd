@@ -3,10 +3,10 @@ title: "Lecture 9"
 author: "DJM"
 date: "27 November 2018"
 output:
+  pdf_document: default
   slidy_presentation:
     css: http://mypage.iu.edu/~dajmcdon/teaching/djmRslidy.css
     font_adjustment: 0
-  pdf_document: default
 bibliography: booth-refs.bib
 ---
 
@@ -204,12 +204,11 @@ Y_1 & X = 1\\ Y_0 & X=0.
 ## Example data
 
 ```{r}
-library(kableExtra)
 data.frame(X = c(1,1,1,1,0,0,0,0),
            Y = c(1,0,1,1,0,1,0,0),
            Y0 = c('*','*','*','*',0,1,0,0),
            Y1 = c(1,0,1,1,'*','*','*','*')) %>%
-  kable() %>% kable_styling(full_width = FALSE, position = 'center')
+  kable() 
 ```
 
 * We see only $X$ and $Y$.
@@ -597,6 +596,15 @@ is unbiased for $\theta$.
 
 * It is certainly plausible that kids watch more TV when it rains, and that neither TV-watching nor autism causes rain. 
 
+```{r}
+aut1 = matrix(0,4,4)
+node_names = c('unobserved','rain','autism','tv')
+aut1[1,3] <- aut1[1,4] <- aut1[2,4] <- aut1[4,3]  <- 1
+aut1 = graph_from_adjacency_matrix(aut1)
+plot(aut1, edge.arrow.size=.4,vertex.size=30, vertex.color = 'orange',
+     vertex.label = node_names, vertex.label.color='black')
+```
+
 * But do rain and autism have some common cause?
 
 * For the West Coast in particular it is easy to find one. 
@@ -839,7 +847,7 @@ If $\X$ fits into RAM, there exist excellent algorithms in LAPACK that are
 - Double precision
 - Very stable
 - $O(np^2)$ with small constants when $n\gg p$.
-- \alr{require extensive random access to matrix}
+- ~~require extensive random access to matrix~~
 
 
 There is a lot of interest in finding and analyzing techniques that
