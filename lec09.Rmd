@@ -138,12 +138,16 @@ P(Y\given X=x) \neq P(Y\given \set{X=x})
 
 ---
 
-![](https://imgs.xkcd.com/comics/cell_phones.png)
+```{r}
+include_graphics('gfx/cell_phones.jpg')
+```
 
 
 ---
 
-![](https://imgs.xkcd.com/comics/correlation.png)
+```{r}
+include_graphics('gfx/correlation.jpg')
+```
 
 
 ## Main messages
@@ -200,6 +204,7 @@ Y_1 & X = 1\\ Y_0 & X=0.
 ## Example data
 
 ```{r}
+library(kableExtra)
 data.frame(X = c(1,1,1,1,0,0,0,0),
            Y = c(1,0,1,1,0,1,0,0),
            Y0 = c('*','*','*','*',0,1,0,0),
@@ -493,7 +498,7 @@ __Example:__
 
 There's the whole linearity thing. I won't go into this, but it's rare to see an IV setup without assuming linearity.
 
-Condition (2), $I \indep Y \given S, \set(X=x)$ is strong and not easily testable.
+Condition (2), $I \indep Y \given S, \set{X=x}$ is strong and not easily testable.
 
 It means that, if we block all arrows into $X$, $S$ blocks all the other paths between $I$ and $Y$. 
 
@@ -502,3 +507,239 @@ To do this, one would to use different data to make such an argument (there aren
 However, there are often multiple domain theories which would produce different conclusions.
 
 Finally, most instruments are __weak__ (they have small covariance with $X$). This leads to unbiased, though high-variance estimates of the regression coefficient. While the direct coefficient is biased, it may be lower variance.
+
+## Matching and backdoor effects
+
+* Recall the earlier result about measuring $\theta$ ($X$ binary)
+\[
+\theta = \int \mu(1,z)p(z)dz - \int \mu(0,z)p(z)dz
+\]
+
+* There we assumed that $(Y_1,Y_0) \indep X \given Z$. This is the same as assuming (say) that given $Z$, we have satisfied the back-door criterion.
+
+* Rather than computing plug-in regression estimators for $\mu(x=1,\cdot)$ and $\mu(x=1,\cdot)$, we could try __matching__
+
+* Basically, suppose we choose $i$ and $X_i=1$. It has covariates $Z_i=z$. If it's true that there exists a $j(i)$ such that $X_{j(i)}=0$ and $Z_{j(i)}=z$, then we have found a match. If we can do this for any $i$, then
+\[
+\frac{1}{n}\sum_i Y_i - Y_{j(i)}
+\]
+is unbiased for $\theta$.
+
+* It may be hard to realistically find such matches. 
+
+* This is much better than assuming a linear model, easier than semi-parametrics.
+
+* Still requires the DAG assumptions.
+
+* Basically nearest neighbor regression $\rightarrow$ curse of dimensionality
+
+## Propensity scores
+
+* Suppose we can find some $R = f(S)$ such that $X \indep S \given R$. 
+
+* This just means $R$ is a sufficient statistic for predicting $X$ from $S$.
+
+* If $S$ satisfies (say) the backdoor criterion, then we can use $R$ instead.
+
+* Especially useful if $R$ has lower dimension than $S$
+
+* Special case: $X$ binary and $R=f(S) = P(X=1 \given S=s)$
+
+* Now, instead of matching on $S$, match on $R$. It's univariate.
+
+* Of course to calculate $R$, we had to do logistic regression of $X$ on $S$ (or similar)
+
+* Important: Unless $S$ satisfies the back door criteria, the propensity scores don't help
+
+## Two stage least squares
+
+* Assume things are linear.
+
+* Assume $I$ is a valid instrument (collection) given $S$
+
+* Regress $X$ on $S$ and $I$. Get predicted values $\hat{X}$.
+
+* Regress $Y$ on $\hat{X}$ and $S$ (not $I$). The coefficient on $\hat{X}$ is what you're after.
+
+* But the CI produced by the second stage is wrong.
+
+## Recommendations
+
+* IV requires the same assumptions as anything else. CIs are often not reliable [@Young2018]
+
+* Matching is also clever, but requires the same conditions. 
+
+> There is a curious divide, among practitioners, between those who lean mostly on instrumental variables, and those who lean mostly on matching. The former tend to suspect that (in our terms) the covariates used in matching are not enough to block all the back-door paths, and to think that the business is more or less over once an exogenous variable has been found. The matchers, for their part, think the instrumentalists are too quick to discount the possibility that their instruments are connected to $Y$ through unmeasured pathways, but that if you match on enough variables, you’ve got to block the back-door paths. (They don’t often worry that they might be conditioning on colliders, or blocking front-door paths, as they do so.) -- C. Shalizi (ADAfaEPoV) 
+
+
+## Crazy IV example
+
+* A recent and widely-promoted preprint by three economists argued that watching television caused autism in children. 
+
+* The economists used the variation in rainfall across locations in California, Oregon and Washington as an instrument
+
+* It is certainly plausible that kids watch more TV when it rains, and that neither TV-watching nor autism causes rain. 
+
+* But do rain and autism have some common cause?
+
+* For the West Coast in particular it is easy to find one. 
+
+```{r}
+aut <- matrix(0,6,6)
+node_names = c('education','late_kids','city_dweller','rain','autism','tv')
+aut[1,2] <- aut[1,3] <- aut[3,4] <- aut[4,6] <- aut[2,5] <- aut[1,6] <- 1
+aut[6,5] = 1
+aut = graph_from_adjacency_matrix(aut)
+plot(aut, edge.arrow.size=.4,vertex.size=30, vertex.color = 'steelblue',
+     vertex.label = node_names, vertex.label.color='black')
+```
+
+* More educated adults $\rightarrow$ Have kids later $\rightarrow$ autism
+
+* More educated adults $\rightarrow$ Live in rainy cities (instead of dry rural areas) $\rightarrow$ Rain
+
+* More educated adults is a plausible common cause so "Rain" is not a valid instrument
+
+# Causal discovery
+
+## What is causal discovery?
+
+* Suppose I have a bunch of variables but I don't know what the DAG is
+
+* Can I learn it?
+
+* That's __causal discovery__
+
+* I'm a bit torn about this topic. On the one hand this topic is well studied 
+
+## The problem
+
+* A DAG implies conditional independence relationships
+
+```{r}
+plot(aut, edge.arrow.size=.4,vertex.size=30, vertex.color = 'steelblue',
+     vertex.label = node_names, vertex.label.color='black')
+```
+
+* Conditional on TV and having kids late in life, Autism is independent of everything else
+
+* That is conditioning on the blocking variables $\Rightarrow$ conditional independence
+
+* This is called __$d$-separation__
+
+* Can you go the other way? There are many well-defined tests of independence (and therefore conditional independence)
+
+* You've seen $\chi^2$-tests for contingency tables, but there are lots of others. Many modern ones that are quite powerful
+
+* In general, however, $X \indep Y \given S$ does not imply $S$ $d$-separates $X$ and $Y$.
+
+## The assumption
+
+Before I get there, consider 4 graphs on 3 variables (these are acyclic, so the only options)
+
+```{r}
+chains = matrix(0,12,12)
+chain_labs = rep(c('X','Y','Z'), times=4)
+chains[1,2] <- chains[2,3] <- chains[6,5] <- chains[5,4] <- chains[8,7] <- 1
+chains[10,11] <- chains[12,11] <- chains[8,9] <- 1
+lay = matrix(c(rep(1:3,times=4), rep(1:4, each=3)),ncol=2)
+chains = graph_from_adjacency_matrix(chains)
+plot(chains, edge.arrow.size=.4, layout = lay,
+     vertex.size=30, vertex.color = 'steelblue',
+     vertex.label = chain_labs, vertex.label.color='black')
+```
+
+The bottom three graphs all imply $X \indep Z \given Y$.
+
+The top one doesn't: $X \indep Z$ but $X \notindep Z \given Y$ ($Y$ is a collider)
+
+Thus, even if we learn $X \indep Z \given Y$, we don't know which of the three graphs generated the data.
+
+These are called __Markov equivalent__ or just __equivalent__
+
+An experiment can determine which one is correct, but observational data can't.
+
+## Testing
+
+
+```{r}
+tris = matrix(0,24,24)
+tris_labs = c('X','U','Y')
+tris[5,6] <- tris[7,9] <- tris[8,7] <- tris[11,10] <- tris[11,12] <- 1
+tris[14,13] <- tris[16,18] <- tris[19,21] <- tris[20,21] <- tris[23,22] <- 1
+tris[23,24] <- tris[22,24] <- 1
+y = rep(c(0,.5,0) + rep(3:0,each=3), times=2)
+x = c(rep(c(0,.5, 1),times=4), rep(c(2,2.5, 3),times=4))
+lay = matrix(c(x,y), ncol=2)
+tris = graph_from_adjacency_matrix(tris)
+plot(tris, edge.arrow.size=.4, layout = lay,
+     vertex.size=30, vertex.color = 'steelblue',
+     vertex.label = tris_labs, vertex.label.color='black')
+```
+
+We get to see $X$ and $Y$, but not $U$.
+
+__Procedure:__
+
+1. Estimate relationship between $X$ and $Y$.
+2. Suppose it's strong. This is consistent with graphs 4--8. Can't tell if $X$ causes $Y$.
+3. Suppose it's weak. This is consistent with graphs 1--3. 
+4. Turns out also consistent with graph 8. Why? $U\rightarrow X\rightarrow Y$ can cancel $U\rightarrow Y$.
+5. We consider this unlikely (a set of measure zero in continuous distributions)
+6. This is called the __faithfulness__ assumption.
+7. Under faithfulness, only 1--3 are possible, none have arrows. Conclude $X\indep Y$.
+
+## The problem
+
+Even though faithfulness seems reasonable, one can construct a distribution that is arbitrarily close to unfaithful.
+
+Thus we can't tell the difference between (say) graph 1 and a nearly unfaithful graph 8.
+
+To get around this, you must assume you have observed all relevant variables.
+
+It is implausible that you have observed all relevant variables.
+
+Thus, causal discovery is impossible (Larry Wasserman).
+
+## Simple example
+
+\[
+\begin{aligned}
+U &= \epsilon_1\\
+X &= a U + \epsilon_2\\
+Y &= b X + c U + \epsilon_3
+\end{aligned}
+\]
+
+* $\epsilon$'s are mean 0.
+* Suppose $b\neq 0$ ($X$ causes $Y$).
+* Since we only observe $(X,Y)$, the relationship is $\rho=a^2 + ac + b$
+* $b$ can be as large as you want.
+* Faithfulness says $\rho \neq 0$ 
+* But I can make $\rho \approx 0$ by altering the dependence on $U$.
+* No matter how much data you collect, I can always screw you by manipulating $a,c$.
+
+## Larry's advice
+
+1. Given observational data, we must allow for possible unobserved confounders
+2. Causal quantities are functions of those
+3. Functions of unobserved quantities are not estimable
+4. Causal discovery is impossible
+
+## Ignoring Larry's advice
+
+* The data-generating distribution has the causal Markov property on a graph $G$
+* The data-generating distribution is faithful to $G$
+* Every member of the population has the same distribution
+* All relevant variables are in G
+* There is only one graph G to which the distribution is faithful
+
+__The Spirtes-Glymour-Scheines algorithm__ for this and refinements, see [@SpirtesGlymour2000]
+
+1. Start with a fully connected, undirected graph on all the variables
+2. For each pair $X$ and $Y$ and the set of other variables $S$, test if $X\indep Y \given S$
+3. Find colliders by checking for conditional dependence, orient the edges of colliders
+4. Try to orient undirected edges by checking for consistency with the already-oriented edges; continue until you can't
+
+
+## References
