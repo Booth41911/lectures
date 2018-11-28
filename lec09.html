@@ -725,7 +725,7 @@ p(gum disease | brushing) p(inflamation | gum disease) p(heart disease | diet, e
 <p><span class="math display">\[
 \begin{aligned}
 &amp; p(y \ \vert\ \texttt{set}(X=x)) = \int p(z)p(y\ \vert\ x,z)dz\\
-\Rightarrow &amp; p(y \ \vert\ \texttt{set}(X=1)) - p(y \ \vert\ \texttt{set}(X=1)) = \int p(z)p(y\ \vert\ 1,z)dz - \int p(z)p(y\ \vert\ 0,z)dz
+\Rightarrow &amp; p(y \ \vert\ \texttt{set}(X=1)) - p(y \ \vert\ \texttt{set}(X=0)) = \int p(z)p(y\ \vert\ 1,z)dz - \int p(z)p(y\ \vert\ 0,z)dz
 \end{aligned}
 \]</span></p>
 <p>This is equivalent to the counterfactual representation.</p>
@@ -791,7 +791,7 @@ P(Y\ \vert\ \texttt{set}(X=x)) = \sum_s P(Y\ \vert\ X=x, S=s)P(S=s)
 <ol style="list-style-type: decimal">
 <li>Blocks all directed paths from <span class="math inline">\(X\)</span> to <span class="math inline">\(Y\)</span>.</li>
 <li>Has no unblocked back door paths from <span class="math inline">\(X\)</span> to <span class="math inline">\(M\)</span>.</li>
-<li>Blocks all back door paths from <span class="math inline">\(X\)</span> to <span class="math inline">\(Y\)</span>.</li>
+<li><span class="math inline">\(X\)</span> Blocks all back door paths from <span class="math inline">\(M\)</span> to <span class="math inline">\(Y\)</span>.</li>
 </ol></li>
 <li><p>Then, <span class="math display">\[
 P(Y\ \vert\ \texttt{set}(X=x)) = \sum_m P(M=m\ \vert\ X=x) \sum_{x'} P(Y\ \vert\ X=x', M=m)P(X=x')
@@ -846,7 +846,7 @@ P(Y\ \vert\ \texttt{set}(I=i)) = \sum_x P(Y\ \vert\ \texttt{set}(X=x)) P(X=x \ \
 \theta = \int \mu(1,z)p(z)dz - \int \mu(0,z)p(z)dz
 \]</span></p></li>
 <li><p>There we assumed that <span class="math inline">\((Y_1,Y_0) \perp\!\!\!\perp X \ \vert\ Z\)</span>. This is the same as assuming (say) that given <span class="math inline">\(Z\)</span>, we have satisfied the back-door criterion.</p></li>
-<li><p>Rather than computing plug-in regression estimators for <span class="math inline">\(\mu(x=1,\cdot)\)</span> and <span class="math inline">\(\mu(x=1,\cdot)\)</span>, we could try <strong>matching</strong></p></li>
+<li><p>Rather than computing plug-in regression estimators for <span class="math inline">\(\mu(x=1,\cdot)\)</span> and <span class="math inline">\(\mu(x=0,\cdot)\)</span>, we could try <strong>matching</strong></p></li>
 <li><p>Basically, suppose we choose <span class="math inline">\(i\)</span> and <span class="math inline">\(X_i=1\)</span>. It has covariates <span class="math inline">\(Z_i=z\)</span>. If it’s true that there exists a <span class="math inline">\(j(i)\)</span> such that <span class="math inline">\(X_{j(i)}=0\)</span> and <span class="math inline">\(Z_{j(i)}=z\)</span>, then we have found a match. If we can do this for any <span class="math inline">\(i\)</span>, then <span class="math display">\[
 \frac{1}{n}\sum_i Y_i - Y_{j(i)}
 \]</span> is unbiased for <span class="math inline">\(\theta\)</span>.</p></li>

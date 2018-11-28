@@ -1,0 +1,1470 @@
+\documentclass[]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\usepackage{fixltx2e} % provides \textsubscript
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+\else % if luatex or xelatex
+  \ifxetex
+    \usepackage{mathspec}
+  \else
+    \usepackage{fontspec}
+  \fi
+  \defaultfontfeatures{Ligatures=TeX,Scale=MatchLowercase}
+\fi
+% use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+% use microtype if available
+\IfFileExists{microtype.sty}{%
+\usepackage{microtype}
+\UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\hypersetup{unicode=true,
+            pdftitle={Lecture 9},
+            pdfauthor={DJM},
+            pdfborder={0 0 0},
+            breaklinks=true}
+\urlstyle{same}  % don't use monospace font for urls
+\usepackage{graphicx,grffile}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+\usepackage[normalem]{ulem}
+% avoid problems with \sout in headers with hyperref:
+\pdfstringdefDisableCommands{\renewcommand{\sout}{}}
+\IfFileExists{parskip.sty}{%
+\usepackage{parskip}
+}{% else
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt plus 2pt minus 1pt}
+}
+\setlength{\emergencystretch}{3em}  % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{0}
+% Redefines (sub)paragraphs to behave more like sections
+\ifx\paragraph\undefined\else
+\let\oldparagraph\paragraph
+\renewcommand{\paragraph}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+\let\oldsubparagraph\subparagraph
+\renewcommand{\subparagraph}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+
+%%% Use protect on footnotes to avoid problems with footnotes in titles
+\let\rmarkdownfootnote\footnote%
+\def\footnote{\protect\rmarkdownfootnote}
+
+%%% Change title format to be more compact
+\usepackage{titling}
+
+% Create subtitle command for use in maketitle
+\newcommand{\subtitle}[1]{
+  \posttitle{
+    \begin{center}\large#1\end{center}
+    }
+}
+
+\setlength{\droptitle}{-2em}
+
+  \title{Lecture 9}
+    \pretitle{\vspace{\droptitle}\centering\huge}
+  \posttitle{\par}
+    \author{DJM}
+    \preauthor{\centering\large\emph}
+  \postauthor{\par}
+      \predate{\centering\large\emph}
+  \postdate{\par}
+    \date{27 November 2018}
+
+\hypersetup{colorlinks=true,urlcolor=blue,linkcolor=blue,citecolor=blue}
+\usepackage{color}
+\renewcommand{\sout}[1]{\textcolor{red}{#1}}
+
+\begin{document}
+\maketitle
+
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Expect}[1]{\mathbb{E}\left[ #1 \right]}
+\newcommand{\Var}[1]{\mathbb{V}\left[ #1 \right]}
+\newcommand{\Cov}[2]{\mathrm{Cov}\left[#1,\ #2\right]}
+\newcommand{\given}{\ \vert\ }
+\renewcommand{\P}{\mathbb{P}}
+\newcommand{\argmin}{\arg\min}
+\newcommand{\argmax}{\arg\max}
+\newcommand{\F}{\mathcal{F}}
+\newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
+\newcommand{\indicator}{\mathbf{1}}
+\renewcommand{\bar}{\overline}
+\renewcommand{\hat}{\widehat}
+\newcommand{\tr}[1]{\mbox{tr}(#1)}
+\newcommand{\X}{X}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\set}[1]{\texttt{set}(#1)}
+\def\indep{\perp\!\!\!\perp}
+\def\notindep{\not\!\perp\!\!\!\perp}
+
+\hypertarget{causal-inference}{%
+\section{Causal inference}\label{causal-inference}}
+
+\hypertarget{introduction}{%
+\section{Introduction}\label{introduction}}
+
+\hypertarget{source-and-thanks}{%
+\subsection{Source and thanks}\label{source-and-thanks}}
+
+Much of this material comes from Larry Wasserman's lecture in
+``Statistical Machine Learning 10-702'' at CMU.
+
+Some additions come from Cosma Shalizi's textbook
+\href{http://www.stat.cmu.edu/~cshalizi/ADAfaEPoV/}{Advanced Data
+Analysis from an Elementary Point of View}.
+
+\hypertarget{prediction-vs.causation}{%
+\subsection{Prediction vs.~causation}\label{prediction-vs.causation}}
+
+These two are very different.
+
+\begin{itemize}
+\tightlist
+\item
+  Prediction: Predict \(Y\) after \textbf{observing} \(X=x\)
+\item
+  Causation: Predict \(Y\) after \textbf{setting} \(X=x\)
+\end{itemize}
+
+Example:
+
+\begin{itemize}
+\tightlist
+\item
+  Prediction: Predict health given that a person eats beets.
+\item
+  Causation: Predict health if I give someone beets.
+\end{itemize}
+
+The first case is simply observational while the second relies on an
+intervention.
+
+Analysis requires different techniques, and often strong assumptions.
+
+\hypertarget{two-types-of-causal-questions}{%
+\subsection{Two types of causal
+questions}\label{two-types-of-causal-questions}}
+
+\sout{Type I:}
+
+Do cell phones cause brain cancer?
+
+In mathematical terms, there are variables \(X\) and \(Y\) and we want
+to determine the causal effect of \(X\) on \(Y\).
+
+Procedure: find a parameter \(\theta\) that measures this effect and try
+to estimate it.
+
+Called \textbf{causal inference}
+
+\sout{Type II:}
+
+I have a pile of variables and I want to discern their causal
+relationships.
+
+Called \textbf{causal discovery}
+
+Larry argues that solving this problem is statistically impossible.
+
+Lots of people work on this problem however.
+
+\hypertarget{two-types-of-data}{%
+\subsection{Two types of data}\label{two-types-of-data}}
+
+\sout{Type I:}
+
+Data from randomized, controlled experiments.
+
+The inference problem is straightforward (well-defined).
+
+\sout{Type II:}
+
+Data from observational studies.
+
+The inference problem is difficult, requires making assumptions and
+using domain knowledge.
+
+\hypertarget{three-languages}{%
+\subsection{Three languages}\label{three-languages}}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Counterfactuals
+\item
+  Causal graphs
+\item
+  Structural equation models
+\end{enumerate}
+
+These are essentially equivalent up to minor details.
+
+\hypertarget{motivation-for-different-notation}{%
+\subsection{Motivation for different
+notation}\label{motivation-for-different-notation}}
+
+\begin{itemize}
+\item
+  Height and reading ability are associated.
+\item
+  Stretching a child will not improve reading ability.
+\item
+  Height does not \textbf{cause} improved reading skill.
+\item
+  Smoking causes cancer.
+\item
+  Society is pretty confident that giving people cigarettes will give
+  them cancer.
+\end{itemize}
+
+\[
+P(Y\ \vert\ X=x) \quad\quad\quad \textrm{v.s.} \quad\quad\quad P(Y\ \vert\ \texttt{set}(X=x))
+\]
+
+Correlation is not causation in math \[
+P(Y\ \vert\ X=x) \neq P(Y\ \vert\ \texttt{set}(X=x))
+\]
+
+\begin{center}\rule{0.5\linewidth}{\linethickness}\end{center}
+
+\begin{center}\includegraphics{gfx/cell_phones} \end{center}
+
+\begin{center}\rule{0.5\linewidth}{\linethickness}\end{center}
+
+\begin{center}\includegraphics{gfx/correlation} \end{center}
+
+\hypertarget{main-messages}{%
+\subsection{Main messages}\label{main-messages}}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Causal effects can be estimated consistently from randomized
+  experiments.
+\item
+  It is difficult to estimate causal effects from observational
+  (non-randomized) experiments.
+\item
+  All causal conclusions from observational studies should be regarded
+  as very tentative.
+\end{enumerate}
+
+As with many of the topics we've examined, we will merely scratch the
+surface.
+
+\hypertarget{counterfactuals}{%
+\section{Counterfactuals}\label{counterfactuals}}
+
+\hypertarget{treatment-effects}{%
+\subsection{Treatment effects}\label{treatment-effects}}
+
+\begin{itemize}
+\tightlist
+\item
+  We get to see \(Y\), the ``response'' or ``outcome''
+\item
+  We also get to see \(X\), the ``treatment''
+\item
+  For a given subject, \((X_i,Y_i)\), we only see the \(Y_i\) at the
+  particular \(X_i\).
+\item
+  We don't get to see that same individual's outcome at a different
+  \(X_i\).
+\item
+  That is, we don't know how their outcome would change if we changed
+  their treatment.
+\item
+  The \textbf{counterfactual} is how \(Y\) varies for different values
+  of treatment.
+\end{itemize}
+
+\begin{center}\includegraphics{lec09_files/figure-latex/unnamed-chunk-3-1} \end{center}
+
+\hypertarget{simplification}{%
+\subsection{Simplification}\label{simplification}}
+
+\begin{itemize}
+\item
+  Assume \(X\) is binary. (for ease, doesn't change anything)
+\item
+  \(X=1\) means treated, \(X=0\) means not
+\item
+  \(\mathbb{E}\left[ Y\ \vert\ X=x \right]\) is what we want for
+  prediction.
+\item
+  Let \[ 
+  Y = 
+  \begin{cases}
+  Y_1 & X = 1\\ Y_0 & X=0.
+  \end{cases}
+  \]
+\item
+  Thus, \(Y=XY_1+(1-X)Y_0\). That's what we see.
+\item
+  \((Y_0,Y_1)\) are called \textbf{potential outcomes}, but we only see
+  one of them, not both.
+\item
+  The one we don't see is the counterfactual.
+\end{itemize}
+
+\hypertarget{example-data}{%
+\subsection{Example data}\label{example-data}}
+
+\begin{tabular}{r|r|l|l}
+\hline
+X & Y & Y0 & Y1\\
+\hline
+1 & 1 & * & 1\\
+\hline
+1 & 0 & * & 0\\
+\hline
+1 & 1 & * & 1\\
+\hline
+1 & 1 & * & 1\\
+\hline
+0 & 0 & 0 & *\\
+\hline
+0 & 1 & 1 & *\\
+\hline
+0 & 0 & 0 & *\\
+\hline
+0 & 0 & 0 & *\\
+\hline
+\end{tabular}
+
+\begin{itemize}
+\tightlist
+\item
+  We see only \(X\) and \(Y\).
+\item
+  The asterisks are unobserved
+\end{itemize}
+
+\hypertarget{causal-inference-1}{%
+\subsection{Causal inference}\label{causal-inference-1}}
+
+\begin{itemize}
+\item
+  We want the effect of the treatment.
+\item
+  This involves the distribution \(p(y_1,y_0)\).
+\item
+  For example the \textbf{mean treatment effect} or \textbf{mean causal
+  effect} is \[
+  \theta = \mathbb{E}\left[ Y_1 \right]-\mathbb{E}\left[ Y_0 \right] = \mathbb{E}\left[ Y\ \vert\ \texttt{set}(X=1) \right] - \mathbb{E}\left[ Y\ \vert\ \texttt{set}(X=0) \right]
+  \]
+\end{itemize}
+
+\textbf{Lemma} \[ 
+\mathbb{E}\left[ Y_1 \right] \neq \mathbb{E}\left[ Y\ \vert\ X=1 \right] \quad\quad\quad \mathbb{E}\left[ Y_0 \right] \neq \mathbb{E}\left[ Y\ \vert\ X=0 \right]
+\]
+
+\hypertarget{what-can-we-estimate}{%
+\subsection{What can we estimate?}\label{what-can-we-estimate}}
+
+In general, we cannot estimate \(\theta\).
+
+We can estimate
+\(\alpha = \mathbb{E}\left[ Y\ \vert\ X=1 \right] - \mathbb{E}\left[ Y\ \vert\ X=0 \right]\).
+
+But these are not equal.
+
+\textbf{Theorem} (Robins et al. 2003):\\
+Let \(\mathcal{P}\) be that set of distributions for \((X,Y_0,Y_1,Y)\)
+where \(P(X=0)>\delta\) and \(P(X=1)>\delta\) for some \(\delta>0\).
+Then there is no estimator \(\widehat{\theta}\) which depends only on
+\((X,Y)\) such that for all \(\epsilon>0\), \[
+\sup_{P\in\mathcal{P}} P\left(|\widehat{\theta}_n-\theta|>\epsilon\right) \xrightarrow{n\rightarrow\infty} 0.
+\]
+
+\textbf{Proof:} Simply construct \(p(x,y_0,y_1)\) and \(q(x,y_0,y_1)\)
+such that \(\theta(p) \neq \theta(q)\) but \(p(x,y) = q(x,y)\).
+
+If \(X\) is continuous, the we care about
+\(\theta(x) = \mathbb{E}\left[ Y\ \vert\ \texttt{set}(X=x) \right] \neq \mathbb{E}\left[ Y\ \vert\ X=x \right]\).
+
+\hypertarget{ways-to-make-the-thing-estimable}{%
+\subsection{Ways to make the thing
+estimable}\label{ways-to-make-the-thing-estimable}}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Randomization
+\item
+  Adjusting for confounding
+\item
+  Instrumental variables
+\end{enumerate}
+
+\hypertarget{randomization}{%
+\subsection{Randomization}\label{randomization}}
+
+If we randomly assign \(X=0\) or \(X=1\), then \[
+(Y_0,Y_1) \perp\!\!\!\perp X.
+\]
+
+Note: \(X\) is \textbf{not} independent of \(Y\).
+
+\textbf{Theorem:}\\
+Let \(\mathcal{P}\) be that set of distributions where \(P(X=0)>\delta\)
+and \(P(X=1)>\delta\) for some \(\delta>0\) and \(X\) is assigned
+randomly. Then \(\theta=\alpha\) and \[
+\widehat{\alpha} = \frac{\sum X_iY_i}{\sum X_i} - \frac{\sum (1-X_i)Y_i}{\sum (1-X_i)}
+\] satisfies (for all \(\epsilon >0\)) \[
+\sup_{P\in\mathcal{P}} P\left(|\widehat{\alpha}_n-\theta|>\epsilon\right) \xrightarrow{n\rightarrow\infty} 0.
+\]
+
+In summary, under random assignment, correlation \(=\) causation.
+
+The same holds if \(X\) is continuous: you can use regression to
+estimate causal effects.
+
+\hypertarget{adjusting-for-confounding}{%
+\subsection{Adjusting for confounding}\label{adjusting-for-confounding}}
+
+\begin{itemize}
+\item
+  This requires strong assumptions.
+\item
+  Without randomization, we don't have \((Y_0,Y_1) \perp\!\!\!\perp X\).
+\item
+  The hope is that there are some additional variables \(Z\) such that
+  \[
+  (Y_0,Y_1) \perp\!\!\!\perp X \ \vert\ Z
+  \]
+\item
+  This condition is referred to as \textbf{ignorability} or a lack of
+  \textbf{unmeasured confounding}
+\item
+  If you proceed in this manner, you must assert that the above
+  condition holds.
+\end{itemize}
+
+\hypertarget{main-result}{%
+\subsection{Main result}\label{main-result}}
+
+\textbf{Theorem:}\\
+If \((Y_0,Y_1) \perp\!\!\!\perp X \ \vert\ Z\), then \[
+\theta = \int \mu(1,z)p(z)dz - \int \mu(0,z)p(z)dz
+\] where \(\mu(x,z) = \mathbb{E}\left[ Y\ \vert\ X=x,\ Z=z \right]\). A
+consistent estimator of \(\theta\) is \[
+\widehat{\theta} = \frac{1}{n}\sum \left(\widehat{\mu}(1,Z_i) - \widehat{\mu}(0,Z_i)\right)
+\] where \(\widehat{\mu}\) is a consistent estimator of
+\(\mathbb{E}\left[ Y\ \vert\ X=x,\ Z=z \right]\).
+
+\begin{itemize}
+\item
+  One needs to estimate \(\mu\) semi-parametrically.
+\item
+  The bias-variance tradeoff for estimating \(\mu\) is not appropriate.
+  You want lower bias and larger variance. This choice is not well
+  understood.
+\item
+  This is different than \[
+  \alpha = \mathbb{E}\left[ Y\ \vert\ X=1 \right] - \mathbb{E}\left[ Y\ \vert\ X=0 \right] = \int \mu(1,z)p(z\ \vert\ X=1)dz - \int \mu(0,z)p(z\ \vert\ X=0)dz
+  \]
+\end{itemize}
+
+\hypertarget{linearity}{%
+\subsection{Linearity}\label{linearity}}
+
+If\\
+1. \(X\) is binary and\\
+2. \((Y_0,Y_1) \perp\!\!\!\perp X \ \vert\ Z\) and\\
+3.
+\(\mathbb{E}\left[ Y\ \vert\ X=x, Z=z \right] = \beta_0 + \beta_1 x + \beta_2^\top z\),
+then \[
+\theta = \beta_1.
+\]
+
+\hypertarget{causal-graphical-models}{%
+\section{Causal graphical models}\label{causal-graphical-models}}
+
+\hypertarget{dags}{%
+\subsection{DAGs}\label{dags}}
+
+\begin{center}\includegraphics{lec09_files/figure-latex/unnamed-chunk-5-1} \end{center}
+
+\begin{itemize}
+\item
+  DAGs imply conditional independence relationships
+\item
+  p(heart disease) = p(health consciousness) p(brushing \textbar{}
+  health) p(exercise \textbar{} health) p(diet \textbar{} health)
+  \(\times\)\\
+  p(gum disease \textbar{} brushing) p(inflamation \textbar{} gum
+  disease) p(heart disease \textbar{} diet, exercise, inflamation)
+\item
+  (the last term factors too)
+\item
+  Nodes are conditionally independent of everything given their parents
+\item
+  We want to know if better brushing decreases heart disease
+\end{itemize}
+
+\hypertarget{causal-dags}{%
+\subsection{Causal DAGs}\label{causal-dags}}
+
+\begin{center}\includegraphics{lec09_files/figure-latex/unnamed-chunk-6-1} \end{center}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Remove arrows into brushing.\\
+\item
+  Set brushing equal to the intervention.\\
+\item
+  Calculate the new distribution of heart disease.
+\end{enumerate}
+
+\[
+\begin{aligned}
+& p(y \ \vert\ \texttt{set}(X=x)) = \int p(z)p(y\ \vert\ x,z)dz\\
+\Rightarrow & p(y \ \vert\ \texttt{set}(X=1)) - p(y \ \vert\ \texttt{set}(X=0)) = \int p(z)p(y\ \vert\ 1,z)dz - \int p(z)p(y\ \vert\ 0,z)dz
+\end{aligned}
+\]
+
+This is equivalent to the counterfactual representation.
+
+\[
+\begin{aligned}
+\theta &= \mathbb{E}\left[ Y \ \vert\ \texttt{set}(X=1) \right] - \mathbb{E}\left[ Y \ \vert\ \texttt{set}(X=0) \right]\\
+ &= \int \int yp(z)p(y\ \vert\ 1,z)dzdy - \int \int yp(z)p(y\ \vert\ 0,z)dzdy\\
+ &= \int \mu(1,z)p(z)dz - \int \mu(0,z)p(z)dz.
+\end{aligned}
+\]
+
+\hypertarget{structural-equation-models}{%
+\subsection{Structural equation
+models}\label{structural-equation-models}}
+
+\begin{center}\includegraphics{lec09_files/figure-latex/unnamed-chunk-7-1} \end{center}
+
+\begin{itemize}
+\item
+  SEMs are equivalent to graphical models.
+\item
+  Write \[
+  \begin{aligned}
+  Z &= g_1(U)\\
+  X &= g_2(Z,V)\\
+  Y &= g_3(Z,X,W)
+  \end{aligned}
+  \] for some (independent) variables \(U,V,W\) and some functions
+  \(g_1,g_2,g_3\)
+\item
+  Deleting the edge between \(Z\) and \(X\) and intervening is just
+  replacing \(g_2(Z,V)\) with \(X=x\).
+\end{itemize}
+
+\hypertarget{pitfall}{%
+\subsection{Pitfall}\label{pitfall}}
+
+It is not enough to ``just condition on everything''.
+
+\begin{center}\includegraphics{lec09_files/figure-latex/unnamed-chunk-8-1} \end{center}
+
+\begin{itemize}
+\tightlist
+\item
+  \(P(Y \ \vert\ X=x) = P(Y \ \vert\ \texttt{set}(X=x))\).
+\item
+  \(P(Y \ \vert\ X=x, Z=z) \neq P(Y \ \vert\ X=x)\).
+\item
+  If we remove the arrow from \(X\rightarrow Y\), we still have a
+  problem because \(Y\) and \(X\) are dependent conditional on \(Z\),
+  but have no direct causal relationship.
+\end{itemize}
+
+\hypertarget{identification-strategies}{%
+\subsection{Identification strategies}\label{identification-strategies}}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  ``back door criterion''
+\item
+  ``front door criterion''
+\item
+  ``instrumental variable''
+\end{enumerate}
+
+Note that all of these require ``knowing'' the graph and measuring
+appropriate variables.
+
+Even then, we then have to solve difficult estimation problems or make
+strong assumptions.
+
+\hypertarget{the-back-door-identification-by-conditioning}{%
+\subsection{The back door (identification by
+conditioning)}\label{the-back-door-identification-by-conditioning}}
+
+\begin{center}\includegraphics[width=0.5\linewidth]{gfx/back-door} \end{center}
+
+\begin{itemize}
+\item
+  We want to condition on a set of variables that blocks (undirected)
+  paths between \(X\) and \(Y\) with an arrow \textbf{into} \(X\).
+\item
+  If a set \(S\) achieves this, and no node in \(S\) is a descendent of
+  \(X\), then \[
+  P(Y\ \vert\ \texttt{set}(X=x)) = \sum_s P(Y\ \vert\ X=x, S=s)P(S=s)
+  \]
+\item
+  We estimate the terms on the right.
+\end{itemize}
+
+\textbf{Examples}\\
+1. \(S=\{S_1,S_2\}\)\\
+2. \(S=\{S_3\}\)\\
+3. \(S=\{S_1,S_2,S_3\}\)
+
+If we add \(B\) to any of these, it breaks.
+
+\hypertarget{the-front-door-identification-by-mechanisms}{%
+\subsection{The front door (identification by
+mechanisms)}\label{the-front-door-identification-by-mechanisms}}
+
+\begin{center}\includegraphics[width=0.5\linewidth]{gfx/front-door} \end{center}
+
+\begin{itemize}
+\item
+  If A set of variables \(M\)
+
+  \begin{enumerate}
+  \def\labelenumi{\arabic{enumi}.}
+  \tightlist
+  \item
+    Blocks all directed paths from \(X\) to \(Y\).
+  \item
+    Has no unblocked back door paths from \(X\) to \(M\).
+  \item
+    \(X\) Blocks all back door paths from \(M\) to \(Y\).
+  \end{enumerate}
+\item
+  Then, \[
+  P(Y\ \vert\ \texttt{set}(X=x)) = \sum_m P(M=m\ \vert\ X=x) \sum_{x'} P(Y\ \vert\ X=x', M=m)P(X=x')
+  \]
+\end{itemize}
+
+Why??\\
+1. Means all causal dependence of \(X\) on \(Y\) flows through \(M\).\\
+2. Means the causal effect of \(X\) on \(M\) is direct.
+(\(P(M=m\ \vert\ \texttt{set}(X=x)) = P(M=m\ \vert\ X=x)\))\\
+3. Means \(X\) satisfies the back door criterion for the causal effect
+of \(M\) on \(Y\).
+
+\textbf{Example:} (don't observe \(U\), want effect of \(X\) on \(Y\))
+
+\begin{itemize}
+\tightlist
+\item
+  \(M \rightarrow Y\) is direct\\
+\item
+  \(X \leftarrow U \leftarrow Y\) confounds the effect of \(X\) on
+  \(Y\).\\
+\item
+  But \(X\) flows through \(M\).\\
+\item
+  \(M\) is confounded by the back-door path
+  \(M\leftarrow X\leftarrow U\leftarrow Y\).\\
+\item
+  Conditioning on \(X\) blocks the back-door.
+\end{itemize}
+
+\hypertarget{instruments}{%
+\subsection{Instruments}\label{instruments}}
+
+\begin{center}\includegraphics[width=0.5\linewidth]{gfx/instrument} \end{center}
+
+\begin{itemize}
+\item
+  A variable \(I\) is an instrument for identifying the effect of \(X\)
+  on \(Y\) if
+
+  \begin{enumerate}
+  \def\labelenumi{\arabic{enumi}.}
+  \tightlist
+  \item
+    There is a set of observed controls \(S\) such that
+    \(I \not\!\perp\!\!\!\perp X | S\).
+  \item
+    Every unblocked path from \(I\) to \(Y\) has an arrow pointing into
+    \(X\).
+  \end{enumerate}
+\item
+  Then \[
+  P(Y\ \vert\ \texttt{set}(I=i)) = \sum_x P(Y\ \vert\ \texttt{set}(X=x)) P(X=x \ \vert\ \texttt{set}(I=i)).
+  \]
+\item
+  This helps iff we can solve for \(P(Y\ \vert\ \texttt{set}(X=x))\). If
+  everything is linear, we can use OLS. If not, we must solve a linear
+  integral equation.
+\end{itemize}
+
+\textbf{Example:}\\
+1. \(I\) is a valid instrument if we can condition on \(S\).\\
+2. If we can condition on \(U\), we don't need an instrument.\\
+3. If we condition on \(B\), \(I\) is no longer valid.
+
+\hypertarget{issues-with-instruments}{%
+\subsection{Issues with instruments}\label{issues-with-instruments}}
+
+There's the whole linearity thing. I won't go into this, but it's rare
+to see an IV setup without assuming linearity.
+
+Condition (2), \(I \perp\!\!\!\perp Y \ \vert\ S, \texttt{set}(X=x)\) is
+strong and not easily testable.
+
+It means that, if we block all arrows into \(X\), \(S\) blocks all the
+other paths between \(I\) and \(Y\).
+
+To do this, one would to use different data to make such an argument
+(there aren't other important mechanisms we're ignoring), so mostly it
+is argued based on domain knowledge.
+
+However, there are often multiple domain theories which would produce
+different conclusions.
+
+Finally, most instruments are \textbf{weak} (they have small covariance
+with \(X\)). This leads to unbiased, though high-variance estimates of
+the regression coefficient. While the direct coefficient is biased, it
+may be lower variance.
+
+\hypertarget{matching-and-backdoor-effects}{%
+\subsection{Matching and backdoor
+effects}\label{matching-and-backdoor-effects}}
+
+\begin{itemize}
+\item
+  Recall the earlier result about measuring \(\theta\) (\(X\) binary) \[
+  \theta = \int \mu(1,z)p(z)dz - \int \mu(0,z)p(z)dz
+  \]
+\item
+  There we assumed that \((Y_1,Y_0) \perp\!\!\!\perp X \ \vert\ Z\).
+  This is the same as assuming (say) that given \(Z\), we have satisfied
+  the back-door criterion.
+\item
+  Rather than computing plug-in regression estimators for
+  \(\mu(x=1,\cdot)\) and \(\mu(x=0,\cdot)\), we could try
+  \textbf{matching}
+\item
+  Basically, suppose we choose \(i\) and \(X_i=1\). It has covariates
+  \(Z_i=z\). If it's true that there exists a \(j(i)\) such that
+  \(X_{j(i)}=0\) and \(Z_{j(i)}=z\), then we have found a match. If we
+  can do this for any \(i\), then \[
+  \frac{1}{n}\sum_i Y_i - Y_{j(i)}
+  \] is unbiased for \(\theta\).
+\item
+  It may be hard to realistically find such matches.
+\item
+  This is much better than assuming a linear model, easier than
+  semi-parametrics.
+\item
+  Still requires the DAG assumptions.
+\item
+  Basically nearest neighbor regression \(\rightarrow\) curse of
+  dimensionality
+\end{itemize}
+
+\hypertarget{propensity-scores}{%
+\subsection{Propensity scores}\label{propensity-scores}}
+
+\begin{itemize}
+\item
+  Suppose we can find some \(R = f(S)\) such that
+  \(X \perp\!\!\!\perp S \ \vert\ R\).
+\item
+  This just means \(R\) is a sufficient statistic for predicting \(X\)
+  from \(S\).
+\item
+  If \(S\) satisfies (say) the backdoor criterion, then we can use \(R\)
+  instead.
+\item
+  Especially useful if \(R\) has lower dimension than \(S\)
+\item
+  Special case: \(X\) binary and \(R=f(S) = P(X=1 \ \vert\ S=s)\)
+\item
+  Now, instead of matching on \(S\), match on \(R\). It's univariate.
+\item
+  Of course to calculate \(R\), we had to do logistic regression of
+  \(X\) on \(S\) (or similar)
+\item
+  Important: Unless \(S\) satisfies the back door criteria, the
+  propensity scores don't help
+\end{itemize}
+
+\hypertarget{two-stage-least-squares}{%
+\subsection{Two stage least squares}\label{two-stage-least-squares}}
+
+\begin{itemize}
+\item
+  Assume things are linear.
+\item
+  Assume \(I\) is a valid instrument (collection) given \(S\)
+\item
+  Regress \(X\) on \(S\) and \(I\). Get predicted values
+  \(\widehat{X}\).
+\item
+  Regress \(Y\) on \(\widehat{X}\) and \(S\) (not \(I\)). The
+  coefficient on \(\widehat{X}\) is what you're after.
+\item
+  But the CI produced by the second stage is wrong.
+\end{itemize}
+
+\hypertarget{recommendations}{%
+\subsection{Recommendations}\label{recommendations}}
+
+\begin{itemize}
+\item
+  IV requires the same assumptions as anything else. CIs are often not
+  reliable (Young 2018)
+\item
+  Matching is also clever, but requires the same conditions.
+\end{itemize}
+
+\begin{quote}
+There is a curious divide, among practitioners, between those who lean
+mostly on instrumental variables, and those who lean mostly on matching.
+The former tend to suspect that (in our terms) the covariates used in
+matching are not enough to block all the back-door paths, and to think
+that the business is more or less over once an exogenous variable has
+been found. The matchers, for their part, think the instrumentalists are
+too quick to discount the possibility that their instruments are
+connected to \(Y\) through unmeasured pathways, but that if you match on
+enough variables, you've got to block the back-door paths. (They don't
+often worry that they might be conditioning on colliders, or blocking
+front-door paths, as they do so.) -- C. Shalizi (ADAfaEPoV)
+\end{quote}
+
+\hypertarget{crazy-iv-example}{%
+\subsection{Crazy IV example}\label{crazy-iv-example}}
+
+\begin{itemize}
+\item
+  A recent and widely-promoted preprint by three economists argued that
+  watching television caused autism in children.
+\item
+  The economists used the variation in rainfall across locations in
+  California, Oregon and Washington as an instrument
+\item
+  It is certainly plausible that kids watch more TV when it rains, and
+  that neither TV-watching nor autism causes rain.
+\end{itemize}
+
+\begin{center}\includegraphics{lec09_files/figure-latex/unnamed-chunk-12-1} \end{center}
+
+\begin{itemize}
+\item
+  But do rain and autism have some common cause?
+\item
+  For the West Coast in particular it is easy to find one.
+\end{itemize}
+
+\begin{center}\includegraphics{lec09_files/figure-latex/unnamed-chunk-13-1} \end{center}
+
+\begin{itemize}
+\item
+  More educated adults \(\rightarrow\) Have kids later \(\rightarrow\)
+  autism
+\item
+  More educated adults \(\rightarrow\) Live in rainy cities (instead of
+  dry rural areas) \(\rightarrow\) Rain
+\item
+  More educated adults is a plausible common cause so ``Rain'' is not a
+  valid instrument
+\end{itemize}
+
+\hypertarget{causal-discovery}{%
+\section{Causal discovery}\label{causal-discovery}}
+
+\hypertarget{what-is-causal-discovery}{%
+\subsection{What is causal discovery?}\label{what-is-causal-discovery}}
+
+\begin{itemize}
+\item
+  Suppose I have a bunch of variables but I don't know what the DAG is
+\item
+  Can I learn it?
+\item
+  That's \textbf{causal discovery}
+\item
+  I'm a bit torn about this topic. On the one hand this topic is well
+  studied
+\end{itemize}
+
+\hypertarget{the-problem}{%
+\subsection{The problem}\label{the-problem}}
+
+\begin{itemize}
+\tightlist
+\item
+  A DAG implies conditional independence relationships
+\end{itemize}
+
+\begin{center}\includegraphics{lec09_files/figure-latex/unnamed-chunk-14-1} \end{center}
+
+\begin{itemize}
+\item
+  Conditional on TV and having kids late in life, Autism is independent
+  of everything else
+\item
+  That is conditioning on the blocking variables \(\Rightarrow\)
+  conditional independence
+\item
+  This is called \textbf{\(d\)-separation}
+\item
+  Can you go the other way? There are many well-defined tests of
+  independence (and therefore conditional independence)
+\item
+  You've seen \(\chi^2\)-tests for contingency tables, but there are
+  lots of others. Many modern ones that are quite powerful
+\item
+  In general, however, \(X \perp\!\!\!\perp Y \ \vert\ S\) does not
+  imply \(S\) \(d\)-separates \(X\) and \(Y\).
+\end{itemize}
+
+\hypertarget{the-assumption}{%
+\subsection{The assumption}\label{the-assumption}}
+
+Before I get there, consider 4 graphs on 3 variables (these are acyclic,
+so the only options)
+
+\begin{center}\includegraphics{lec09_files/figure-latex/unnamed-chunk-15-1} \end{center}
+
+The bottom three graphs all imply \(X \perp\!\!\!\perp Z \ \vert\ Y\).
+
+The top one doesn't: \(X \perp\!\!\!\perp Z\) but
+\(X \not\!\perp\!\!\!\perp Z \ \vert\ Y\) (\(Y\) is a collider)
+
+Thus, even if we learn \(X \perp\!\!\!\perp Z \ \vert\ Y\), we don't
+know which of the three graphs generated the data.
+
+These are called \textbf{Markov equivalent} or just \textbf{equivalent}
+
+An experiment can determine which one is correct, but observational data
+can't.
+
+\hypertarget{testing}{%
+\subsection{Testing}\label{testing}}
+
+\begin{center}\includegraphics{lec09_files/figure-latex/unnamed-chunk-16-1} \end{center}
+
+We get to see \(X\) and \(Y\), but not \(U\).
+
+\textbf{Procedure:}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Estimate relationship between \(X\) and \(Y\).
+\item
+  Suppose it's strong. This is consistent with graphs 4--8. Can't tell
+  if \(X\) causes \(Y\).
+\item
+  Suppose it's weak. This is consistent with graphs 1--3.
+\item
+  Turns out also consistent with graph 8. Why?
+  \(U\rightarrow X\rightarrow Y\) can cancel \(U\rightarrow Y\).
+\item
+  We consider this unlikely (a set of measure zero in continuous
+  distributions)
+\item
+  This is called the \textbf{faithfulness} assumption.
+\item
+  Under faithfulness, only 1--3 are possible, none have arrows. Conclude
+  \(X\perp\!\!\!\perp Y\).
+\end{enumerate}
+
+\hypertarget{the-problem-1}{%
+\subsection{The problem}\label{the-problem-1}}
+
+Even though faithfulness seems reasonable, one can construct a
+distribution that is arbitrarily close to unfaithful.
+
+Thus we can't tell the difference between (say) graph 1 and a nearly
+unfaithful graph 8.
+
+To get around this, you must assume you have observed all relevant
+variables.
+
+It is implausible that you have observed all relevant variables.
+
+Thus, causal discovery is impossible (Larry Wasserman).
+
+\hypertarget{simple-example}{%
+\subsection{Simple example}\label{simple-example}}
+
+\[
+\begin{aligned}
+U &= \epsilon_1\\
+X &= a U + \epsilon_2\\
+Y &= b X + c U + \epsilon_3
+\end{aligned}
+\]
+
+\begin{itemize}
+\tightlist
+\item
+  \(\epsilon\)'s are mean 0.
+\item
+  Suppose \(b\neq 0\) (\(X\) causes \(Y\)).
+\item
+  Since we only observe \((X,Y)\), the relationship is
+  \(\rho=a^2 + ac + b\)
+\item
+  \(b\) can be as large as you want.
+\item
+  Faithfulness says \(\rho \neq 0\)
+\item
+  But I can make \(\rho \approx 0\) by altering the dependence on \(U\).
+\item
+  No matter how much data you collect, I can always screw you by
+  manipulating \(a,c\).
+\end{itemize}
+
+\hypertarget{larrys-advice}{%
+\subsection{Larry's advice}\label{larrys-advice}}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Given observational data, we must allow for possible unobserved
+  confounders
+\item
+  Causal quantities are functions of those
+\item
+  Functions of unobserved quantities are not estimable
+\item
+  Causal discovery is impossible
+\end{enumerate}
+
+\hypertarget{ignoring-larrys-advice}{%
+\subsection{Ignoring Larry's advice}\label{ignoring-larrys-advice}}
+
+\begin{itemize}
+\tightlist
+\item
+  The data-generating distribution has the causal Markov property on a
+  graph \(G\)
+\item
+  The data-generating distribution is faithful to \(G\)
+\item
+  Every member of the population has the same distribution
+\item
+  All relevant variables are in G
+\item
+  There is only one graph G to which the distribution is faithful
+\end{itemize}
+
+\textbf{The Spirtes-Glymour-Scheines algorithm} for this and
+refinements, see (Spirtes, Glymour, and Scheines 2000)
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Start with a fully connected, undirected graph on all the variables
+\item
+  For each pair \(X\) and \(Y\) and the set of other variables \(S\),
+  test if \(X\perp\!\!\!\perp Y \ \vert\ S\)
+\item
+  Find colliders by checking for conditional dependence, orient the
+  edges of colliders
+\item
+  Try to orient undirected edges by checking for consistency with the
+  already-oriented edges; continue until you can't
+\end{enumerate}
+
+\hypertarget{extensions}{%
+\subsection{Extensions}\label{extensions}}
+
+A number of other algorithms
+
+\begin{itemize}
+\tightlist
+\item
+  PC algorithm is like SGS but more computationally feasible
+\item
+  CI, FCI and RFCI try to determine if there are (causal) unobserved
+  variables and then learn some structure for the observed ones
+\end{itemize}
+
+\hypertarget{approximation-techniques}{%
+\section{Approximation techniques}\label{approximation-techniques}}
+
+\hypertarget{what-to-do-with-big-data}{%
+\subsection{What to do with big data}\label{what-to-do-with-big-data}}
+
+Modern statistical applications --- genomics, neural image analysis,
+text analysis, weather prediction --- have large numbers of covariates
+\(p\)
+
+Also frequently have lots of observations \(n\).
+
+Need algorithms which can handle these kinds of data sets. With good
+statistical properties
+
+Three big families:\\
+1. \(n \ll p\) - Dimension reduction, kernels, random projection\\
+2. \(n \gg p\) - compression, sub-sampling\\
+3. Algorithmic things (either/both) - SGD, ADMM, early stopping
+
+\hypertarget{today}{%
+\subsection{Today}\label{today}}
+
+Many statistical methods use (perhaps implicitly) a singular value
+decomposition (SVD) to solve an optimization problem:
+
+\begin{itemize}
+\tightlist
+\item
+  Penalized Least Squares:\\
+  \[\min_\beta \left\lVert Y-X\beta \right\rVert_2^2 + \lambda \mbox{Pen}(\beta)\]
+\end{itemize}
+
+\begin{center}\includegraphics{lec09_files/figure-latex/optim-figs1-1} \end{center}
+
+\begin{itemize}
+\tightlist
+\item
+  PCA:\\
+  \[\max_{V^\top V=I_d} V^\top X^\top X V \]
+\end{itemize}
+
+\begin{center}\includegraphics{lec09_files/figure-latex/optim-figs2-1} \end{center}
+
+\hypertarget{svd-slow}{%
+\subsection{SVD == Slow}\label{svd-slow}}
+
+The SVD is computationally expensive.
+
+For a generic \(n\times p\) matrix, the SVD requires
+\(O\left(\min\left\{np^2,n^2p\right\}\right)\) and storage of the entire
+matrix in fast memory.
+
+I want to understand the statistical properties of some approximations
+which speed up computation and save storage.
+
+\hypertarget{core-techniques}{%
+\subsection{Core techniques}\label{core-techniques}}
+
+If \(X\) fits into RAM, there exist excellent algorithms in LAPACK that
+are
+
+\begin{itemize}
+\tightlist
+\item
+  Double precision
+\item
+  Very stable
+\item
+  \(O(np^2)\) with small constants when \(n\gg p\).
+\item
+  \sout{require extensive random access to matrix}
+\end{itemize}
+
+There is a lot of interest in finding and analyzing techniques that
+extend these approaches to large(r) problems
+
+\hypertarget{out-of-core-techniques}{%
+\subsection{Out-of-core techniques}\label{out-of-core-techniques}}
+
+Many techniques focus on randomized compression
+
+This is sometimes known as sketching or preconditioning
+
+\begin{itemize}
+\tightlist
+\item
+  Rokhlin, Tygert, (2008) ``A fast randomized algorithm for
+  overdetermined linear least-squares regression.''
+\item
+  Drineas, Mahoney, et al., (2011) ``Faster least squares
+  approximation.''
+\item
+  Woodruff, (2014) ``Sketching as a Tool for Numerical Linear Algebra.''
+\item
+  Wang, Lee, Mahdavi, Kolar, Srebro, (2016) ``Sketching meets random
+  projection in the dual.''
+\item
+  Ma, Mahoney, and Yu, (2015), ``A statistical perspective on
+  algorithmic leveraging.''
+\item
+  Pilanci and Wainwright, (2015-2016). Multiple papers.
+\item
+  Others.
+\end{itemize}
+
+\hypertarget{kernel-approximation}{%
+\section{Kernel approximation}\label{kernel-approximation}}
+
+\hypertarget{a-quick-sketch-of-the-intuition}{%
+\subsection{A quick sketch of the
+intuition}\label{a-quick-sketch-of-the-intuition}}
+
+\begin{itemize}
+\item
+  Suppose we want to approximate
+  \(S=\frac{1}{n}X^\top X \in \mathbb{R}^{p\times p}\)
+\item
+  \(S\) is symmetric and positive semi-definite
+\item
+  Choose \(t\) and form a ``sketching'' matrix
+  \(\Phi \in \mathbb{R}^{p\times t}\)
+\item
+  Then write \[
+  S \approx (S\Phi) (\Phi^\top S \Phi)^\dagger (S\Phi)^\top
+  \]
+\end{itemize}
+
+\hypertarget{special-cases}{%
+\subsection{Special cases}\label{special-cases}}
+
+\begin{itemize}
+\item
+  Nyström and column sampling correspond to particular \(\Phi\)
+\item
+  But they are easy to implement without extra multiplications
+\item
+  Randomly choose \(t\) entries in \(\{1,\ldots,p\}\) and
+\item
+  Then partition the matrix so the selected portion is \(S_{11}\) \[
+  S = \begin{bmatrix} S_{11} & S_{12}\\ S_{21} & S_{22}\end{bmatrix}
+  \]
+\end{itemize}
+
+\sout{Nyström} \[
+S \approx \begin{bmatrix} S_{11} \\ S_{21} \end{bmatrix}
+S_{11}^\dagger \begin{bmatrix}S_{11} & S_{12}\end{bmatrix}
+\]
+
+\sout{Column sampling} \[
+S \approx U\left(\begin{bmatrix} S_{11} \\
+    S_{21} \end{bmatrix}\right) \Lambda\left(\begin{bmatrix} S_{11}
+    \\ S_{21} \end{bmatrix}\right) U \left(\begin{bmatrix} S_{11} \\
+    S_{21} \end{bmatrix}\right)^\top 
+\]
+
+\hypertarget{applications}{%
+\subsection{Applications}\label{applications}}
+
+\begin{itemize}
+\tightlist
+\item
+  Kernel methods of all types
+\item
+  SVM, Kernel PCA, Ridge regression, Kmeans, etc.
+\end{itemize}
+
+\hypertarget{compression}{%
+\section{Compression}\label{compression}}
+
+\hypertarget{compression-1}{%
+\subsection{Compression}\label{compression-1}}
+
+\textbf{Basic Idea:}
+
+\begin{itemize}
+\tightlist
+\item
+  Choose some matrix \(Q\in\mathbb{R}^{q\times n}\) .
+\item
+  Under many conditions, sufficient to choose \(q=\Omega(p)\).
+\item
+  Use \(QX\) (and) \(QY\) instead in the optimization.
+\item
+  \(O(np^2)\longrightarrow O(p^3)\).
+\end{itemize}
+
+Finding \(QX\) for arbitrary \(Q\) and \(X\) takes \(O(qnp)\)
+computations.
+
+So we're back to \(O(np^2)\).
+
+To get this approach to work, we need some structure on \(Q\)
+
+\hypertarget{the-q-matrix}{%
+\subsection{\texorpdfstring{The \(Q\)
+matrix}{The Q matrix}}\label{the-q-matrix}}
+
+\begin{itemize}
+\item
+  Gaussian:
+
+  Well behaved distribution and eas(ier) theory. Dense matrix
+\item
+  Fast Johnson-Lindenstrauss Methods
+\item
+  Randomized Hadamard (or Fourier) transformation:
+
+  Allows for \(O(np\log(p))\) computations.
+\item
+  \(Q=\pi\tau\) for \(\pi\) a permutation of \(I\) and
+  \(\tau = [I_q\ 0]\):
+
+  \(QX\) means ``read \(q\) (random) rows''
+\item
+  Sparse Bernoulli: \[
+  Q_{ij}
+  \stackrel{i.i.d.}{\sim}
+  \begin{cases}
+  1 & \textrm{with probability }  1/(2s) \\ 
+  0 & \textrm{with probability }  1-1/s\\
+  -1 & \textrm{with probability }  1/(2s) \\ 
+  \end{cases}
+  \] This means \(QX\) takes \(O\left(\frac{qnp}{s}\right)\)
+  ``computations'' on average.
+\end{itemize}
+
+\hypertarget{compression-methods}{%
+\subsection{Compression methods}\label{compression-methods}}
+
+\begin{itemize}
+\item
+  Basic \[
+  \min_\beta \left\lVert Y-X\beta \right\rVert + \lambda \mbox{Pen}(\beta) \longrightarrow
+  \min_\beta \left\lVert Q(Y-X\beta) \right\rVert + \lambda \mbox{Pen}(\beta)
+  \]
+\item
+  Hessian \[
+  \min_\beta \left\lVert Y-X\beta \right\rVert + \lambda \mbox{Pen}(\beta) \longrightarrow
+  \min_\beta -2\beta^\top X^\top Y + \beta^\top X^\top Q^\top Q X\beta + \lambda \mbox{Pen}(\beta)
+  \]
+\item
+  Combined \[
+  \widehat{\beta} = \alpha_1 \widehat{\beta}_{\textrm{Basic}} + \alpha_2\widehat{\beta}_{\textrm{Hess}}
+  \]
+\item
+  Iterative Hessian (iteration \(t+1\)) \[
+  \min_\beta \left\lVert QX(\beta-\beta^{(t)}) \right\rVert_2^2 - 2\beta^\top X^\top Y + \beta^\top X^\top X\beta^{(t)} + \lambda \mbox{Pen}(\beta)
+  \]
+\end{itemize}
+
+\hypertarget{when-do-they-work}{%
+\subsection{When do they work}\label{when-do-they-work}}
+
+\begin{itemize}
+\tightlist
+\item
+  Theory generally provides \((1+\epsilon)\)-approximation to
+  \(\widehat\beta_{OLS}\)
+\end{itemize}
+
+For OLS, typical results would be to produce an \(\tilde{\beta}\) such
+that \[
+\begin{aligned}
+\left\lVert X\tilde{\beta} - Y \right\rVert_2^2 &\leq (1+\epsilon)  \left\lVert X\widehat{\beta} - Y \right\rVert_2^2,\\
+\left\lVert X(\tilde{\beta} - \widehat{\beta}) \right\rVert_2^2 &\leq \epsilon\left\lVert X\widehat{\beta} \right\rVert_2^2,\\
+\left\lVert \tilde{\beta} - \widehat{\beta} \right\rVert_2^2 &\leq \epsilon\left\lVert \widehat{\beta} \right\rVert_2^2,
+\end{aligned}
+\]
+
+\begin{itemize}
+\tightlist
+\item
+  These require \(iid\) sub-Gaussian noise
+\item
+  The proof techniques basically hope that the compression ``gets'' all
+  the leverage points in \(X\).
+\item
+  So the hope is that the approximation is close to as good as the full
+  solution
+\item
+  If there are outliers, it's possible that the approximation will
+  ``smear'' out their effects, results could be better
+\item
+  For more information see (Pilanci and Wainwright 2016; Homrighausen
+  and McDonald 2017; Wang et al. 2017)
+\end{itemize}
+
+\hypertarget{algorithms}{%
+\section{Algorithms}\label{algorithms}}
+
+\hypertarget{early-stopping}{%
+\subsection{Early stopping}\label{early-stopping}}
+
+\begin{itemize}
+\tightlist
+\item
+  Easy to implement. Stop your GD earlier than convergence (seems to
+  give some regularization too)
+\end{itemize}
+
+\begin{center}\includegraphics{gfx/timings} \end{center}
+
+\begin{itemize}
+\item
+  Alternatives: approximate inside the algorithm
+\item
+  Approximate the gradient rather than compute it
+\item
+  Approximate the ADMM update
+\item
+  Unclear what the statistical implications are if you do this
+\end{itemize}
+
+\hypertarget{references}{%
+\subsection*{References}\label{references}}
+\addcontentsline{toc}{subsection}{References}
+
+\hypertarget{refs}{}
+\leavevmode\hypertarget{ref-HomrighausenMcDonald2017}{}%
+Homrighausen, Darren, and Daniel J. McDonald. 2017. ``Compressed and
+Penalized Linear Regression.'' submitted.
+
+\leavevmode\hypertarget{ref-PilanciWainwright2016}{}%
+Pilanci, Mert, and Martin J Wainwright. 2016. ``Iterative Hessian
+Sketch: Fast and Accurate Solution Approximation for Constrained
+Least-Squares.'' \emph{The Journal of Machine Learning Research} 17 (1):
+1842--79.
+
+\leavevmode\hypertarget{ref-RobinsScheines2003}{}%
+Robins, James M., Richard Scheines, Peter Spirtes, and Larry Wasserman.
+2003. ``Uniform Consistency in Causal Inference.'' \emph{Biometrika} 90
+(3): 491--515.
+
+\leavevmode\hypertarget{ref-SpirtesGlymour2000}{}%
+Spirtes, Peter, Clark N Glymour, and Richard Scheines. 2000.
+\emph{Causation, Prediction, and Search}. MIT press.
+
+\leavevmode\hypertarget{ref-WangLee2017}{}%
+Wang, Jialei, Jason Lee, Mehrdad Mahdavi, Mladen Kolar, and Nati Srebro.
+2017. ``Sketching Meets Random Projection in the Dual: A Provable
+Recovery Algorithm for Big and High-dimensional Data.'' In
+\emph{Proceedings of the 20th International Conference on Artificial
+Intelligence and Statistics (AISTATS)}, edited by Aarti Singh and Jerry
+Zhu, 54:1150--8. Proceedings of Machine Learning Research. Fort
+Lauderdale, FL, USA: PMLR.
+
+\leavevmode\hypertarget{ref-Young2018}{}%
+Young, Alwyn. 2018. ``Consistency Without Inference: Instrumental
+Variables in Practical Application.'' London School of Economics.
+
+
+\end{document}

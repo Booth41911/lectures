@@ -3,10 +3,13 @@ title: "Lecture 9"
 author: "DJM"
 date: "27 November 2018"
 output:
-  pdf_document: default
   slidy_presentation:
     css: http://mypage.iu.edu/~dajmcdon/teaching/djmRslidy.css
     font_adjustment: 0
+  pdf_document: 
+    keep_tex: TRUE
+    includes:
+      in_header: booth.sty
 bibliography: booth-refs.bib
 ---
 
@@ -371,7 +374,7 @@ plot(net, edge.arrow.size=.4,vertex.size=30,
 \[
 \begin{aligned}
 & p(y \given \set{X=x}) = \int p(z)p(y\given x,z)dz\\
-\Rightarrow & p(y \given \set{X=1}) - p(y \given \set{X=1}) = \int p(z)p(y\given 1,z)dz - \int p(z)p(y\given 0,z)dz
+\Rightarrow & p(y \given \set{X=1}) - p(y \given \set{X=0}) = \int p(z)p(y\given 1,z)dz - \int p(z)p(y\given 0,z)dz
 \end{aligned}
 \]
 
@@ -467,7 +470,7 @@ include_graphics("gfx/front-door.jpg")
 
     1. Blocks all directed paths from $X$ to $Y$.
     2. Has no unblocked back door paths from $X$ to $M$.
-    3. Blocks all back door paths from $X$ to $Y$.
+    3. $X$ Blocks all back door paths from $M$ to $Y$.
     
 * Then,
 \[
@@ -533,7 +536,7 @@ Finally, most instruments are __weak__ (they have small covariance with $X$). Th
 
 * There we assumed that $(Y_1,Y_0) \indep X \given Z$. This is the same as assuming (say) that given $Z$, we have satisfied the back-door criterion.
 
-* Rather than computing plug-in regression estimators for $\mu(x=1,\cdot)$ and $\mu(x=1,\cdot)$, we could try __matching__
+* Rather than computing plug-in regression estimators for $\mu(x=1,\cdot)$ and $\mu(x=0,\cdot)$, we could try __matching__
 
 * Basically, suppose we choose $i$ and $X_i=1$. It has covariates $Z_i=z$. If it's true that there exists a $j(i)$ such that $X_{j(i)}=0$ and $Z_{j(i)}=z$, then we have found a match. If we can do this for any $i$, then
 \[
